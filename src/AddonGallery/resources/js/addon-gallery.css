@@ -1,0 +1,61 @@
+/** RESETS */
+.post-type-give_forms #wpbody {
+	padding-left: 0;
+}
+
+/** TODO: tbh it would be better to just unequneue these styles */
+.post-type-give_forms #wpbody:after {
+	all: unset !important;
+}
+
+.give-addon-gallery,
+.give-addon-gallery *,
+.give-addon-gallery ::before,
+.give-addon-gallery ::after, {
+	box-sizing: border-box;
+}
+
+.give-addon-gallery {
+	font-family: 'Open Sans', sans-serif;
+}
+
+.give-addon-gallery-tab-container {
+	max-width: 64.875rem;
+	margin: 0 auto;
+}
+
+.give-addon-gallery-addon-grid {
+	box-sizing: border-box;
+	display: grid;
+	gap: 2.75rem;
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.give-addon-gallery-addon-cta-card {
+	box-sizing: border-box;
+	background-color: #fff;
+	padding: 1.5rem;
+	border: 0.0625rem solid #e2e2e2;
+	border-radius: 1rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.give-addon-gallery-addon-cta-card__button {
+	box-sizing: border-box;
+	display: block;
+	appearance: none;
+	background-color: #66bb6a;
+	color: white;
+	font-weight: 700;
+	font-size: 1.125rem;
+	padding: 0.888em;
+	text-align: center;
+	text-decoration: none;
+	border-radius: 9999px;
+	line-height: 1;
+}
+
+.give-addon-gallery-addon-cta-card__button:hover {
+	color: #fff;
+}

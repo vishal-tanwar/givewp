@@ -44,6 +44,32 @@ class Admin {
 		// Load Reports page
 		$reports = new Admin\Pages\Reports();
 		$reports->init();
+
+		// ATTENTION: This is not for real, just for working on frontend
+		add_action('admin_menu', function () {
+			add_submenu_page(
+				'edit.php?post_type=give_forms',
+				esc_html__( 'Add-ons', 'give' ),
+				esc_html__( 'Add-ons', 'give' ),
+				'view_give_reports',
+				'give-addons',
+				function () {
+					echo '<div id="root"></div>';
+				}
+			);
+		});
+
+		add_action('admin_enqueue_scripts', function ($base) {
+			if ($base !== "give_forms_page_give-addons") return;
+
+			wp_enqueue_script(
+				'give-admin-addon-gallery',
+				GIVE_PLUGIN_URL . 'assets/dist/js/admin-addon-gallery.js',
+				['wp-element', 'wp-i18n', 'wp-hooks'],
+				'0.0.0',
+				true
+			);
+		});
 	}
 
 }
