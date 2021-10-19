@@ -8,6 +8,10 @@
 	all: unset !important;
 }
 
+#wpbody-content {
+	padding-bottom: 0;
+}
+
 .give-addon-gallery,
 .give-addon-gallery *,
 .give-addon-gallery ::before,
@@ -17,8 +21,12 @@
 
 .give-addon-gallery {
 	height: 100%;
+	padding-bottom: 6rem;
 	font-family: 'Open Sans', sans-serif;
-	background-color: #f1f1f1;
+	background-color: #fff;
+	background-image: url('/app/plugins/give/assets/src/images/addon-gallery-decor.png');
+	background-position: top right;
+	background-repeat: no-repeat;
 	color: #333;
 }
 

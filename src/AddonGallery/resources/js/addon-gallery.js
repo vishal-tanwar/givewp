@@ -1,5 +1,5 @@
-import {useState} from 'react';
 import {render} from 'react-dom';
+import {Tabs, TabList, Tab as BaseTab, TabPanels, TabPanel} from '@reach/tabs';
 
 import {__} from '@wordpress/i18n';
 
@@ -61,72 +61,43 @@ const AdditionalAddons = () => (
 
 const Fonts___TEMP = () => <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />;
 
-// Not designed for re-used beyond this file.
-const Tab = ({index, children, isSelected, onSelect}) => (
-	<button
-		type="button"
-		role="tab"
-		aria-selected={isSelected}
-		aria-controls={`give-addon-gallery-tab-panel-${index}`}
-		tabIndex={isSelected ? 0 : -1}
-		onClick={onSelect}
-		id={`give-addon-gallary-tab-${index}`}
-		className="give-addon-gallery-tab"
-	>
-		{children}
-	</button>
-);
+const Tab = props => <BaseTab className="give-addon-gallery-tab" {...props} />;
 
-// Not designed for re-used beyond this file.
-const TabPanel = ({children, index, isSelected}) => (
-	<div
-		role="tabpanel"
-		aria-labelledby={`give-addon-gallary-tab-${index}`}
-		id={`give-addon-gallery-tab-panel-${index}`}
-		tabIndex={isSelected ? 0 : -1}
-		hidden={!isSelected}
-	>
-		{children}
-	</div>
-);
-
-function AddonGallery() {
-	const [currentTab, setCurrentTab] = useState(1);
-
-	return (
-		<article className="give-addon-gallery">
-			<Fonts___TEMP />
-			<div className="give-addon-gallery-header">
-				<div className="give-addon-gallery-tab-container">
-					<h1 className="screen-reader-text">
-						{__('Give Add-ons Gallery', 'give')}
-					</h1>
-					<GiveWPLogo />
-					<div role="tablist" aria-orientation="horizontal">
-						<Tab index={1} isSelected={currentTab === 1} onSelect={() => setCurrentTab(1)}>
-							{__('Must Have Add-ons', 'give')}
-						</Tab>
-						<Tab index={2} isSelected={currentTab === 2} onSelect={() => setCurrentTab(2)}>
-							{__('View Pricing Plans', 'give')}
-						</Tab>
-						<Tab index={3} isSelected={currentTab === 3} onSelect={() => setCurrentTab(3)}>
-							{__('Additional Add-ons', 'give')}
-						</Tab>
-					</div>
-				</div>
+const AddonGallery = () => (
+	<Tabs as="article" className="give-addon-gallery">
+		<Fonts___TEMP />
+		<div className="give-addon-gallery-header">
+			<div className="give-addon-gallery-tab-container">
+				<h1 className="screen-reader-text">
+					{__('Give Add-ons Gallery', 'give')}
+				</h1>
+				<GiveWPLogo />
+				<TabList>
+					<Tab>
+						{__('Must Have Add-ons', 'give')}
+					</Tab>
+					<Tab>
+						{__('View Pricing Plans', 'give')}
+					</Tab>
+					<Tab>
+						{__('Additional Add-ons', 'give')}
+					</Tab>
+				</TabList>
 			</div>
-			<TabPanel index={1} isSelected={currentTab === 1}>
+		</div>
+		<TabPanels>
+			<TabPanel>
 				<MustHaveAddons />
 			</TabPanel>
-			<TabPanel index={2} isSelected={currentTab === 2}>
+			<TabPanel>
 				<PricingPlans />
 			</TabPanel>
-			<TabPanel index={3} isSelected={currentTab === 3}>
+			<TabPanel>
 				<AdditionalAddons />
 			</TabPanel>
-		</article>
-	);
-}
+		</TabPanels>
+	</Tabs>
+);
 
 render(
 	<AddonGallery />,
