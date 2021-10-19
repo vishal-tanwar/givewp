@@ -62,6 +62,8 @@ class Admin {
 		add_action('admin_enqueue_scripts', function ($base) {
 			if ($base !== "give_forms_page_give-addons") return;
 
+			wp_enqueue_style('give-admin-addon-gallery', 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
 			wp_enqueue_script(
 				'give-admin-addon-gallery',
 				GIVE_PLUGIN_URL . 'assets/dist/js/admin-addon-gallery.js',
