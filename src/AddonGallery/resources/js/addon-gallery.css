@@ -16,12 +16,68 @@
 }
 
 .give-addon-gallery {
+	height: 100%;
 	font-family: 'Open Sans', sans-serif;
+	background-color: #f1f1f1;
+	color: #333;
+}
+
+.give-addon-gallery-header {
+	padding-top: 2.625rem;
+	border-bottom: 0.0625rem solid #eaeaea;
+	display: grid;
+	gap: 1.5rem;
 }
 
 .give-addon-gallery-tab-container {
 	max-width: 64.875rem;
+	width: 100%;
 	margin: 0 auto;
+}
+
+.give-addon-gallery-tab {
+	position: relative;
+	background-color: transparent;
+	border: 0;
+	appearance: none;
+	font-weight: 600;
+	font-size: 1rem;
+	color: inherit;
+	padding: 0.9em 1em;
+}
+
+.give-addon-gallery-tab::after {
+	content: "";
+	position: absolute;
+	display: block;
+	background-color: transparent;
+	top: calc(100% - 0.1875em);
+	height: 0.1875em;
+	width: calc(100% - 2em);
+	transition: background-color 100ms ease-in-out;
+}
+
+.give-addon-gallery-tab[aria-selected=true]::after {
+	background-color: #66bb6a;
+}
+
+.give-addon-gallery-tab-panel__header {
+	display: grid;
+	text-align: center;
+	gap: 1rem;
+	padding: 3.5rem 2rem;
+}
+
+.give-addon-gallery-title {
+	font-size: 1.875rem;
+	font-weight: 600;
+	color: #333;
+	margin: 0;
+}
+
+.give-addon-gallery-description {
+	font-size: 1.125rem;
+	margin: 0;
 }
 
 .give-addon-gallery-addon-grid {
@@ -29,6 +85,8 @@
 	display: grid;
 	gap: 2.75rem;
 	grid-template-columns: repeat(3, 1fr);
+	margin: 0;
+	/** This grid will need to figure out vertical stretch between items as well. */
 }
 
 .give-addon-gallery-addon-cta-card {
@@ -39,6 +97,33 @@
 	border-radius: 1rem;
 	display: flex;
 	flex-direction: column;
+	gap: 1rem;
+}
+
+.give-addon-gallery-addon-cta-card__header-container {
+	display: flex;
+	align-items: center;
+	gap: 0.8125rem;
+}
+
+.give-addon-gallery-addon-cta-card__header-container svg {
+	flex: none;
+}
+
+.give-addon-gallery-addon-cta-card__header {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	margin: 0;
+}
+
+.give-addon-gallery-addon-cta-card__description {
+	font-weight: 600;
+	font-size: 0.9375rem;
+	margin: 0;
+}
+
+.give-addon-gallery-addon-cta-card__image {
+	height: 5.5rem;
 }
 
 .give-addon-gallery-addon-cta-card__button {
