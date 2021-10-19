@@ -1,19 +1,15 @@
-import {render} from 'react-dom';
 import {Tabs, TabList, Tab, TabPanels, TabPanel} from '@reach/tabs';
+import {__} from '@wordpress/i18n';
 
 import {MustHaveAddons} from './MustHaveAddons';
 import {AdditionalAddons} from './AdditionalAddons';
 import {PricingPlans} from './PricingPlans';
-
-import {__} from '@wordpress/i18n';
-
 import giveLogo from '!!raw-loader!./givewp-logo.svg';
-import './addon-gallery.css';
-import styles from './addon-gallery.module.css';
+import styles from './AddonGallery.module.css';
 
 const GiveWPLogo = () => <div dangerouslySetInnerHTML={{__html: giveLogo}} />;
 
-render(
+export const AddonGallery = () => (
 	<Tabs as="article" className={styles.root}>
 		<div className={styles.header}>
 			<div className={styles.container}>
@@ -45,6 +41,5 @@ render(
 				<AdditionalAddons />
 			</TabPanel>
 		</TabPanels>
-	</Tabs>,
-	document.getElementById('root'),
+	</Tabs>
 );

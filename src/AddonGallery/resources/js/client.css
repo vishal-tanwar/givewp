@@ -1,10 +1,8 @@
-/** RESETS */
 .post-type-give_forms #wpbody {
 	padding-left: 0;
 }
 
-/** TODO: tbh it would be better to just unequneue these styles */
-.post-type-give_forms #wpbody:after {
+.post-type-give_forms #wpbody::after {
 	all: unset !important;
 }
 

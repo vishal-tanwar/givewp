@@ -43,7 +43,7 @@ const config = {
 		'donor-dashboards-block': [ './src/DonorDashboards/resources/js/block/index.js' ],
 		'give-log-list-table-app': [ './src/Log/Admin/index.js' ],
 		'give-migrations-list-table-app': [ './src/MigrationLog/Admin/index.js' ],
-		'admin-addon-gallery': [ './src/AddonGallery/resources/js/addon-gallery.js' ],
+		'admin-addon-gallery': [ './src/AddonGallery/resources/js/client.js' ],
 	},
 	output: {
 		path: path.join( __dirname, './assets/dist/' ),
