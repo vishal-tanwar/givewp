@@ -36,6 +36,9 @@ mix.setPublicPath('assets/dist')
     .js('src/DonorDashboards/resources/js/block/index.js', 'js/donor-dashboards-block.js')
     .js('src/Log/Admin/index.js', 'js/give-log-list-table-app.js')
     .js('src/MigrationLog/Admin/index.js', 'js/give-migrations-list-table-app.js')
+    .js('src/InPluginUpsells/resources/js/addons-admin-page.js', 'js/admin-upsell-addons-page.js')
+    .js('src/InPluginUpsells/resources/js/recurring-donations-settings-tab.js', 'js/admin-upsell-recurring-donations-settings-tab.js')
+    .js('src/InPluginUpsells/resources/js/sale-banner.js', 'js/admin-upsell-sale-banner.js')
     .js('src/DonationSummary/resources/js/summary.js', 'js/give-donation-summary.js')
     .react()
     .sourceMaps(false)
@@ -61,6 +64,16 @@ mix.webpackConfig({
 mix.options({
     // Don't perform any css url rewriting by default
     processCssUrls: false,
+
+    // Prevent LICENSE files from showing up in JS builds
+    terser: {
+        extractComments: (astNode, comment) => false,
+        terserOptions: {
+            format: {
+                comments: false,
+            }
+        }
+    }
 });
 
 if (mix.inProduction()) {
