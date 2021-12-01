@@ -69,7 +69,6 @@ document.addEventListener( 'DOMContentLoaded', function( e ) {
 
 			if ( isUpdatingPaymentInfo || 'stripe' === selectedGatewayId || isStripeModalCheckoutGateway ) {
                 stripeElements.mountElement( cardElements );
-
 			} else if( doUnmount ) {
 				stripeElements.unMountElement( cardElements );
 			}

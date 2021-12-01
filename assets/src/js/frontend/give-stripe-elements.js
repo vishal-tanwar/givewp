@@ -24,6 +24,7 @@ class GiveStripeElements {
 		this.idPrefix = formElement.getAttribute( 'data-id' ) ? formElement.getAttribute( 'data-id' ) : '';
 		this.locale = give_stripe_vars.preferred_locale;
 		this.fieldsFormat = give_stripe_vars.cc_fields_format;
+		this.isPaymentsInputField = this.fieldsFormat === 'payments';
 		this.isSingleInputField = this.fieldsFormat === 'single';
 		this.isMounted = false;
 		this.fontStyles = [];
@@ -108,16 +109,21 @@ class GiveStripeElements {
 				delete args.placeholder;
 			}
 
-			// paymentElement.push( stripeElement.create( element[ 0 ], args ) );
+            // Using the Stripe Payment Element?
+            if( this.isPaymentsInputField ) {
 
-            const stripe = Stripe('pk_test_HnppPfR8TETtPRg5Ccw8iEKF');
-            const elementA = document.querySelector( element[ 1 ]);
-            const options = {
-                clientSecret: elementA.dataset.stripeClientSecret,
-            };
-            const elements = stripe.elements(options);
+                const stripe = this.setupStripeElement();
+                const elementWrap = document.querySelector( element[ 1 ] );
+                const options = {
+                    clientSecret: elementWrap.dataset.stripeClientSecret,
+                };
+                const elements = stripe.elements(options);
+                paymentElement.push( elements.create( 'payment' ) );
 
-            paymentElement.push( elements.create( 'payment' ) );
+            } else {
+                paymentElement.push( stripeElement.create( element[ 0 ], args ) );
+            }
+
 		} );
 
 		if ( 'cardNumber' === mountOnElements[ 0 ][ 0 ] ) {
@@ -203,7 +209,11 @@ class GiveStripeElements {
 			elementsToMountOn = {
 				card: `#give-stripe-single-cc-fields-${ this.idPrefix }`,
 			};
-		}
+		} else if( this.isPaymentsInputField ) {
+            elementsToMountOn = {
+                card: `#give-stripe-payment-element-${ this.idPrefix }`,
+            };
+        }
 
 		return Object.entries( elementsToMountOn );
 	}

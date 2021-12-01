@@ -13,27 +13,28 @@ class Stripe
     /**
      * Check whether the Account is configured or not.
      *
+     * @return bool
      * @since  2.7.0
      * @access public
      *
-     * @return bool
      */
     public static function isAccountConfigured()
     {
         $publishableKey = give_stripe_get_publishable_key();
         $secretKey = give_stripe_get_secret_key();
 
-        return ! empty($publishableKey) || ! empty($secretKey);
+        return !empty($publishableKey) || !empty($secretKey);
     }
 
     /**
      * This function is used to add Stripe account details to donation if donation process with any stripe payment method.
      *
-     * @since 2.7.0
-     *
      * @param int $formId
      *
      * @param int $donationId
+     *
+     * @since 2.7.0
+     *
      */
     public static function addAccountDetail($donationId, $formId)
     {
@@ -78,12 +79,12 @@ class Stripe
     /**
      * Show Stripe Credit Card Fields.
      *
-     * @since  2.8.0
-     * @access public
-     *
      * @param string $idPrefix ID Prefix to define same forms uniquely.
      *
      * @return mixed|void
+     * @since  2.8.0
+     * @access public
+     *
      */
     public static function showCreditCardFields($idPrefix)
     {
@@ -92,19 +93,19 @@ class Stripe
 
         // Display the Stripe Payment Element if using that option.
         if ('payments' === $ccFieldFormat) {
-
             // Create Payment Intent to pass Client Secret to browser.
             $paymentIntentAPI = new \Give_Stripe_Payment_Intent();
             $intent = $paymentIntentAPI->create([
                 'amount' => 2000,
-                'currency' => 'gbp',
-                'automatic_payment_methods' => [ 'enabled' => true ]
+                'currency' => give_get_currency(),
+                'automatic_payment_methods' => ['enabled' => true],
+
             ]);
             echo sprintf(
-                '<div id="%1$s" data-stripe-client-secret="%2$s"></div>',
-                "give-stripe-payment-element-{$idPrefix}", $intent->client_secret
+                '<div id="%1$s" class="give-stripe-payment-element-wrap" data-stripe-client-secret="%2$s"></div>',
+                "give-stripe-payment-element-{$idPrefix}",
+                $intent->client_secret
             );
-
         } elseif ('single' === $ccFieldFormat) {
             // Display the stripe container single CC field Stripe Element.
             echo sprintf(
@@ -215,9 +216,9 @@ class Stripe
     /**
      * Collect Billing Address?
      *
+     * @return bool
      * @since 2.8.0
      *
-     * @return bool
      */
     public static function collectBillingAddress()
     {
@@ -227,17 +228,17 @@ class Stripe
     /**
      * Can Show Billing address Fields.
      *
-     * @since 2.8.0
-     *
      * @param array $args List of additional arguments.
      *
-     * @param int   $formId Donation Form ID.
+     * @param int $formId Donation Form ID.
      *
      * @return bool|mixed
+     * @since 2.8.0
+     *
      */
     public static function canShowBillingAddress($formId, $args)
     {
-        if ( ! self::collectBillingAddress()) {
+        if (!self::collectBillingAddress()) {
             remove_action('give_after_cc_fields', 'give_default_cc_address_fields');
 
             return false;
