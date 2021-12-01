@@ -63,6 +63,7 @@ class GiveStripeElements {
 	 * @returns {*}
 	 */
 	getElements( stripeElement ) {
+
 		let args = {
 			locale: this.locale,
 		};
@@ -88,7 +89,7 @@ class GiveStripeElements {
 	 *
 	 * @returns {[]}
 	 */
-	createElement( stripeElement, formElement ) {
+	createElement( stripeElement, formElement, setupStripeElement ) {
 		const paymentElement = [];
 		const mountOnElements = this.getElementsToMountOn();
 		const args = {
@@ -107,7 +108,16 @@ class GiveStripeElements {
 				delete args.placeholder;
 			}
 
-			paymentElement.push( stripeElement.create( element[ 0 ], args ) );
+			// paymentElement.push( stripeElement.create( element[ 0 ], args ) );
+
+            const stripe = Stripe('pk_test_HnppPfR8TETtPRg5Ccw8iEKF');
+            const elementA = document.querySelector( element[ 1 ]);
+            const options = {
+                clientSecret: elementA.dataset.stripeClientSecret,
+            };
+            const elements = stripe.elements(options);
+
+            paymentElement.push( elements.create( 'payment' ) );
 		} );
 
 		if ( 'cardNumber' === mountOnElements[ 0 ][ 0 ] ) {

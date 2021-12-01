@@ -68,7 +68,6 @@ function give_stripe_get_connected_account_options() {
 	$form_id                = ! empty( $_POST['give-form-id'] ) ? absint( $_POST['give-form-id'] ) : 0;
 	$default_account        = give_stripe_get_default_account( $form_id );
 	$args['stripe_account'] = $default_account['account_id'];
-
 	return $args;
 }
 

@@ -64,7 +64,7 @@ class Stripe
     }
 
     /**
-     * Return whether or not a Stripe payment method.
+     * Return whether a Stripe payment method.
      *
      * @param $paymentMethod
      *
@@ -90,8 +90,24 @@ class Stripe
         ob_start();
         $ccFieldFormat = give_get_option('stripe_cc_fields_format', 'multi');
 
+
+        // Display the Stripe Payment Element if using that option.
         if ('single' === $ccFieldFormat) {
-            // Display the stripe container which can be occupied by Stripe for CC fields.
+
+            // Create Payment Intent to pass Client Secret to browser.
+            $paymentIntentAPI = new \Give_Stripe_Payment_Intent();
+            $intent = $paymentIntentAPI->create([
+                'amount' => 2000,
+                'currency' => 'gbp',
+                'automatic_payment_methods' => [ 'enabled' => true ]
+            ]);
+            echo sprintf(
+                '<div id="%1$s" data-stripe-client-secret="%2$s"></div>',
+                "give-stripe-payment-element-{$idPrefix}", $intent->client_secret
+            );
+
+        } elseif ('single' === $ccFieldFormat) {
+            // Display the stripe container single CC field Stripe Element.
             echo sprintf(
                 '<div id="%1$s" class="give-stripe-single-cc-field-wrap"></div>',
                 "give-stripe-single-cc-fields-{$idPrefix}"

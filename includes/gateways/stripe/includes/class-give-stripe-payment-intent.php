@@ -25,6 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 if ( ! class_exists( 'Give_Stripe_Payment_Intent' ) ) {
 
+    /**
+     *
+     */
 	class Give_Stripe_Payment_Intent {
 
 		public function __construct() {
@@ -32,7 +35,7 @@ if ( ! class_exists( 'Give_Stripe_Payment_Intent' ) ) {
 		}
 
 		/**
-		 * This function is used to create payment intent in Stripe.
+		 * This function is used to create a payment intent in Stripe.
 		 *
 		 * @param array $args List of parameters required to create payment intent.
 		 *
@@ -43,7 +46,7 @@ if ( ! class_exists( 'Give_Stripe_Payment_Intent' ) ) {
 		 */
 		public function create( $args ) {
 
-			// Add application fee, if the Stripe premium add-on is not active.
+            // Add application fee, if the Stripe premium add-on is not active.
 			if ( ApplicationFee::canAddfee() ) {
 				$args['application_fee_amount'] = give_stripe_get_application_fee_amount( $args['amount'] );
 			}

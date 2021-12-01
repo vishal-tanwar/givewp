@@ -467,7 +467,7 @@ if ( ! class_exists( 'Give_Stripe_Gateway' ) ) {
 			// Log it with DB.
 			give_record_gateway_error( __( 'Stripe Error', 'give' ), $log_message );
 
-			// Send donor back to checkout page on error.
+			// Send donor back to check out page on error.
 			$this->send_back_to_checkout();
 
 			return false;

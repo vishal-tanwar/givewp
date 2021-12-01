@@ -64,10 +64,12 @@ document.addEventListener( 'DOMContentLoaded', function( e ) {
 		 * @param {boolean} doUnmount
 		 */
 		function mountStripeElements(doUnmount = true) {
+
 			const { selectedGatewayId, isStripeModalCheckoutGateway } = getFormState();
 
 			if ( isUpdatingPaymentInfo || 'stripe' === selectedGatewayId || isStripeModalCheckoutGateway ) {
-				stripeElements.mountElement( cardElements );
+                stripeElements.mountElement( cardElements );
+
 			} else if( doUnmount ) {
 				stripeElements.unMountElement( cardElements );
 			}

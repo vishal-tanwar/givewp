@@ -69,7 +69,6 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 
 			ob_start();
 			$idPrefix = ! empty( $args['id_prefix'] ) ? $args['id_prefix'] : '';
-
 			do_action( 'give_before_cc_fields', $form_id ); ?>
 
 			<fieldset id="give_cc_fields" class="give-do-validate">
@@ -135,16 +134,17 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 			return $form;
 		}
 
-		/**
-		 * This function will be used for donation processing.
-		 *
-		 * @param array $donation_data List of donation data.
-		 *
-		 * @since  2.5.0
-		 * @access public
-		 *
-		 * @return void
-		 */
+        /**
+         * This function is for donation processing.
+         *
+         * @param array $donation_data List of donation data.
+         *
+         * @since  2.5.0
+         * @access public
+         *
+         * @return false|void
+         * @throws \Stripe\Exception\ApiErrorException
+         */
 		public function process_payment( $donation_data ) {
 
 			// Bailout, if the current gateway and the posted gateway mismatched.
@@ -152,14 +152,14 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 				return;
 			}
 
-			// Make sure we don't have any left over errors present.
+			// Make sure we don't have any leftover errors present.
 			give_clear_errors();
 
 			$payment_method_id = ! empty( $donation_data['post_data']['give_stripe_payment_method'] )
 				? $donation_data['post_data']['give_stripe_payment_method']
 				: false;
 
-			// Send donor back to checkout page, if no payment method id exists.
+			// Send donor back to check out page, if no payment method id exists.
 			if ( empty( $payment_method_id ) ) {
 				give_record_gateway_error(
 					__( 'Stripe Payment Method Error', 'give' ),
@@ -210,7 +210,7 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 					// Record the pending payment in Give.
 					$donation_id = give_insert_payment( $payment_data );
 
-					// Return error, if donation id doesn't exists.
+					// Return error, if donation id doesn't exist.
 					if ( ! $donation_id ) {
 						give_record_gateway_error(
 							__( 'Donation creating error', 'give' ),
@@ -268,6 +268,7 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 						$intent_args['receipt_email'] = $donation_data['user_email'];
 					}
 
+                    // Create Payment Intent.
 					$intent = $this->payment_intent->create( $intent_args );
 
 					// Save Payment Intent Client Secret to donation note and DB.
