@@ -109,7 +109,6 @@ if ( ! class_exists( 'Give_Stripe_Admin_Settings' ) ) {
 			$groups = [
 				'accounts'    => __( 'Manage Accounts', 'give' ),
 				'general'     => __( 'General Settings', 'give' ),
-				'payment-element' => __( 'Multi-Payments', 'give' ),
 				'credit-card' => __( 'Credit Card', 'give' ),
 				'checkout'    => __( 'Stripe Checkout', 'give' ),
 				'sepa'        => __( 'SEPA Direct Debit', 'give' ),

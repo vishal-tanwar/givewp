@@ -90,9 +90,8 @@ class Stripe
         ob_start();
         $ccFieldFormat = give_get_option('stripe_cc_fields_format', 'multi');
 
-
         // Display the Stripe Payment Element if using that option.
-        if ('single' === $ccFieldFormat) {
+        if ('payments' === $ccFieldFormat) {
 
             // Create Payment Intent to pass Client Secret to browser.
             $paymentIntentAPI = new \Give_Stripe_Payment_Intent();
