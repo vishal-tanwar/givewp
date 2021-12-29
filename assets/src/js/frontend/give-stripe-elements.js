@@ -27,6 +27,7 @@ class GiveStripeElements {
 		this.isPaymentsInputField = this.fieldsFormat === 'payments';
 		this.isSingleInputField = this.fieldsFormat === 'single';
 		this.isMounted = false;
+        let elements = false;
 		this.fontStyles = [];
 
 		// If font styles are defined, add them to font styles array
@@ -117,8 +118,8 @@ class GiveStripeElements {
                 const options = {
                     clientSecret: elementWrap.dataset.stripeClientSecret,
                 };
-                const elements = stripe.elements(options);
-                paymentElement.push( elements.create( 'payment' ) );
+                this.elements = stripe.elements(options);
+                paymentElement.push( this.elements.create( 'payment' ) );
 
             } else {
                 paymentElement.push( stripeElement.create( element[ 0 ], args ) );
@@ -258,11 +259,11 @@ class GiveStripeElements {
 	 * @since 2.9.4 only add card name for multi-input field
 	 * @since 2.8.0
 	 */
-	createPaymentMethod( formElement, stripeElement, cardElements ) {
+	async createPaymentMethod( formElement, stripeElement, cardElements ) {
 		const billing_details = {};
 
 		if ( ! this.isSingleInputField ) {
-			billing_details.name = formElement.querySelector( 'input[name="card_name"]' ).value;
+			// billing_details.name = formElement.querySelector( 'input[name="card_name"]' ).value;
 		}
 
 		if ( ! give_stripe_vars.stripe_card_update ) {
@@ -299,25 +300,47 @@ class GiveStripeElements {
 		}
 
 		// Create Payment Method using the CC fields.
-		stripeElement.createPaymentMethod( {
-			type: 'card',
-			card: cardElements[ 0 ],
-			billing_details: billing_details,
-		} ).then( function( result ) {
-			if ( result.error ) {
-				const jQueryFormElement = jQuery( formElement );
-				const error = `<div class="give_errors"><p class="give_error">${ result.error.message }</p></div>`;
-				const formId = formElement.getAttribute( 'data-id' );
+		// stripeElement.createPaymentMethod( {
+		// 	type: 'card',
+		// 	card: cardElements[ 0 ],
+		// 	billing_details: billing_details,
+		// } ).then( function( result ) {
+		// 	if ( result.error ) {
+		// 		const jQueryFormElement = jQuery( formElement );
+		// 		const error = `<div class="give_errors"><p class="give_error">${ result.error.message }</p></div>`;
+		// 		const formId = formElement.getAttribute( 'data-id' );
+        //
+		// 		Give.form.fn.resetDonationButton( jQueryFormElement );
+		// 		formElement.querySelector( `#give-stripe-payment-errors-${ formId }` ).innerHTML = error;
+        //
+		// 		return;
+		// 	}
+        //
+		// 	formElement.querySelector( 'input[name="give_stripe_payment_method"]' ).value = result.paymentMethod.id;
+		// 	formElement.submit();
+		// } );
 
-				Give.form.fn.resetDonationButton( jQueryFormElement );
-				formElement.querySelector( `#give-stripe-payment-errors-${ formId }` ).innerHTML = error;
+        console.log('Elements:', this.elements);
 
-				return;
-			}
+       stripeElement.confirmPayment({
+            elements: this.elements,
+            confirmParams: {
+                // Make sure to change this to your payment completion page
+                return_url: "http://localhost:4242/public/checkout.html",
+            },
+        }).then(function(result) {
+            console.log(result);
 
-			formElement.querySelector( 'input[name="give_stripe_payment_method"]' ).value = result.paymentMethod.id;
-			formElement.submit();
-		} );
+            if (result.error) {
+
+            }
+        }).catch(e => {
+            console.log('Catching:');
+            console.log(arguments);
+            console.log(e);
+        });
+
+
 	}
 
 	/**

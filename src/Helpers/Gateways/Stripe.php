@@ -99,7 +99,6 @@ class Stripe
                 'amount' => 2000,
                 'currency' => give_get_currency(),
                 'automatic_payment_methods' => ['enabled' => true],
-
             ]);
             echo sprintf(
                 '<div id="%1$s" class="give-stripe-payment-element-wrap" data-stripe-client-secret="%2$s"></div>',
