@@ -96,14 +96,15 @@ class Stripe
             // Create Payment Intent to pass Client Secret to browser.
             $paymentIntentAPI = new \Give_Stripe_Payment_Intent();
             $intent = $paymentIntentAPI->create([
-                'amount' => 2000,
+                'amount' => 10000,
                 'currency' => give_get_currency(),
                 'automatic_payment_methods' => ['enabled' => true],
             ]);
             echo sprintf(
-                '<div id="%1$s" class="give-stripe-payment-element-wrap" data-stripe-client-secret="%2$s"></div>',
+                '<div id="%1$s" class="give-stripe-payment-element-wrap" data-stripe-client-secret="%2$s"></div><input type="hidden" name="give_stripe_payment_intent_client_secret" value="%3$s" />',
                 "give-stripe-payment-element-{$idPrefix}",
-                $intent->client_secret
+                $intent->client_secret,
+                $intent->id
             );
         } elseif ('single' === $ccFieldFormat) {
             // Display the stripe container single CC field Stripe Element.

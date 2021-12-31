@@ -316,16 +316,32 @@ class GiveStripeElements {
         // 	formElement.submit();
         // } );
 
-        console.log('Confirming payment');
-
         const {error} = await this.stripe.confirmPayment({
             elements: this.elements,
+            redirect: 'if_required',
             confirmParams: {
-                return_url: 'http://givewp.local',
+                return_url: 'https://givestripe.local/donation-confirmation/',
+                payment_method_data: {
+                    billing_details: billing_details,
+                }
             },
+        }).then(function(result) {
+            if (result.error) {
+                const jQueryFormElement = jQuery( formElement );
+                const error = `<div class="give_errors"><p class="give_error">${ result.error.message }</p></div>`;
+                const formId = formElement.getAttribute( 'data-id' );
+
+                Give.form.fn.resetDonationButton( jQueryFormElement );
+                formElement.querySelector( `#give-stripe-payment-errors-${ formId }` ).innerHTML = error;
+
+                return;
+
+            } else {
+                formElement.submit();
+            }
+
         });
 
-        console.log({error});
     }
 
     /**

@@ -160,14 +160,14 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 				: false;
 
 			// Send donor back to check out page, if no payment method id exists.
-			if ( empty( $payment_method_id ) ) {
-				give_record_gateway_error(
-					__( 'Stripe Payment Method Error', 'give' ),
-					__( 'The payment method failed to generate during a donation. This is usually caused by a JavaScript error on the page preventing Stripe’s JavaScript from running correctly. Reach out to GiveWP support for assistance.', 'give' )
-				);
-				give_set_error( 'no-payment-method-id', __( 'Unable to generate Payment Method ID. Please contact a site administrator for assistance.', 'give' ) );
-				give_send_back_to_checkout( '?payment-mode=' . give_clean( $_GET['payment-mode'] ) );
-			}
+//			if ( empty( $payment_method_id ) ) {
+//				give_record_gateway_error(
+//					__( 'Stripe Payment Method Error', 'give' ),
+//					__( 'The payment method failed to generate during a donation. This is usually caused by a JavaScript error on the page preventing Stripe’s JavaScript from running correctly. Reach out to GiveWP support for assistance.', 'give' )
+//				);
+//				give_set_error( 'no-payment-method-id', __( 'Unable to generate Payment Method ID. Please contact a site administrator for assistance.', 'give' ) );
+//				give_send_back_to_checkout( '?payment-mode=' . give_clean( $_GET['payment-mode'] ) );
+//			}
 
 			// Any errors?
 			$errors = give_get_errors();
@@ -269,7 +269,12 @@ if ( ! class_exists( 'Give_Stripe_Card' ) ) {
 					}
 
                     // Create Payment Intent.
-					$intent = $this->payment_intent->create( $intent_args );
+//					$intent = $this->payment_intent->create( $intent_args );
+
+                    error_log(print_r($donation_data, true) . "\n", 3, WP_CONTENT_DIR . '/debug_new.log');
+
+                    // Get Payment Intent.
+                    $intent = $this->payment_intent->retrieve($donation_data['post_data']['give_stripe_payment_intent_client_secret']);
 
 					// Save Payment Intent Client Secret to donation note and DB.
 					give_insert_payment_note( $donation_id, 'Stripe Payment Intent Client Secret: ' . $intent->client_secret );
