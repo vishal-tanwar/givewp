@@ -28,8 +28,8 @@ async function fetchForms(args: {} = {}) {
         headers: {
             'Content-Type': 'application/json',
             'X-WP-Nonce': window.GiveDonationForms.apiNonce,
-        }
-    })
+        },
+    });
     if (response.ok) {
         const result = await response.json();
         console.log(result);
@@ -37,6 +37,13 @@ async function fetchForms(args: {} = {}) {
     } else {
         return false;
     }
+}
+
+function editDonationFormURL(id: number): URL {
+    const url = new URL('post.php', location.href);
+    url.searchParams.set('post', id.toString());
+    url.searchParams.set('action', 'edit');
+    return url;
 }
 
 function AdminDonationForms() {
@@ -54,60 +61,90 @@ function AdminDonationForms() {
             } else {
                 setDonationForms([...mockDonationForms]);
             }
-        })()
+        })();
     }, [page]);
 
-    function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent> & { target: HTMLFormElement }) {
+    function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent> & {target: HTMLFormElement}) {
         event.preventDefault();
         setPage(parseInt(event.target.currentPageSelector.value));
     }
 
+    function deleteForm() {
+        // TODO
+    }
+
     return (
-        <>
+        <article>
             <div className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>{__('Donation Forms', 'give')}</h1>
+                <a href="post-new.php?post_type=give_forms" className={styles.button}>
+                    Add Form
+                </a>
             </div>
             <div className={styles.pageContent}>
-                <form onSubmit={handleSubmit}>
-                    <button type="submit">Submit</button>
-                    <nav className={styles.paginationContainer}>
-                        <span className={styles.totalItems}>{count.toString() + " forms"}</span>
-                        <Pagination
-                            currentPage={page}
-                            totalPages={Math.ceil(count / perPage)}
-                            disabled={false}
-                            setPage={setPage}
-                        />
-                    </nav>
+                <form>
+                    <button>Change Page</button>
+                    <span className={styles.totalItems}>{count.toString() + ' forms'}</span>
+                    <Pagination
+                        currentPage={page}
+                        totalPages={Math.ceil(count / perPage)}
+                        disabled={false}
+                        setPage={setPage}
+                    />
                 </form>
-                <div className={styles.tableContainer}>
+                <div role="group" aria-labelledby="giveDonationFormsTableCaption" className={styles.tableGroup}>
                     <table className={styles.table}>
+                        <caption id="giveDonationFormsTableCaption" className={styles.tableCaption}>
+                            {__('Donation Forms', 'give')}
+                        </caption>
                         <thead>
-                        <tr>
-                            <th>{__('Name', 'give')}</th>
-                            <th style={{textAlign: 'end'}}>{__('Amount', 'give')}</th>
-                            <th>{__('Goal', 'give')}</th>
-                            <th>{__('Donations', 'give')}</th>
-                            <th>{__('Shortcode', 'give')}</th>
-                            <th>{__('Date', 'give')}</th>
-                        </tr>
+                            <tr>
+                                <th scope="col" aria-sort="none">
+                                    {__('Name', 'give')}
+                                </th>
+                                <th scope="col" aria-sort="none" style={{textAlign: 'end'}}>
+                                    {__('Amount', 'give')}
+                                </th>
+                                <th scope="col" aria-sort="none">
+                                    {__('Goal', 'give')}
+                                </th>
+                                <th scope="col" aria-sort="none">
+                                    {__('Donations', 'give')}
+                                </th>
+                                <th scope="col" aria-sort="none">
+                                    {__('Shortcode', 'give')}
+                                </th>
+                                <th scope="col" aria-sort="ascending">
+                                    {__('Date', 'give')}
+                                </th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {donationForms.map((form) => (
-                            <tr key={form.id}>
-                                <td>{form.name}</td>
-                                <td style={{textAlign: 'end'}}>{form.amount}</td>
-                                <td>{form.goal ? form.goal : 'No Goal Set'}</td>
-                                <td>{form.donations}</td>
-                                <td>{form.shortcode}</td>
-                                <td>{form.datetime}</td>
-                            </tr>
-                        ))}
+                            {donationForms.map((form) => (
+                                <tr key={form.id}>
+                                    <th scope="row">
+                                        <a href={editDonationFormURL(form.id).href}>{form.name}</a>
+                                        <div role="group" aria-label={__('Actions', 'give')}>
+                                            <a href={editDonationFormURL(form.id).href} className={styles.action}>
+                                                Edit <span className="give-visually-hidden">{form.name}</span>
+                                            </a>
+                                            <button type="button" onClick={deleteForm} className={styles.action}>
+                                                Delete <span className="give-visually-hidden">{form.name}</span>
+                                            </button>
+                                        </div>
+                                    </th>
+                                    <td style={{textAlign: 'end'}}>{form.amount}</td>
+                                    <td>{form.goal ? form.goal : 'No Goal Set'}</td>
+                                    <td>{form.donations}</td>
+                                    <td>{form.shortcode}</td>
+                                    <td>{form.datetime}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </>
+        </article>
     );
 }
 
