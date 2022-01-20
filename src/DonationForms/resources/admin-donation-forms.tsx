@@ -1,6 +1,7 @@
 import {StrictMode, SyntheticEvent, useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
 import {__} from '@wordpress/i18n';
+import cx from 'classnames';
 
 import styles from './admin-donation-forms.module.scss';
 import mockDonationForms from './mock-donation-forms.json';
@@ -99,30 +100,35 @@ function AdminDonationForms() {
                         </caption>
                         <thead>
                             <tr>
-                                <th scope="col" aria-sort="none">
+                                <th scope="col" aria-sort="none" className={styles.tableColumnHeader}>
                                     {__('Name', 'give')}
                                 </th>
-                                <th scope="col" aria-sort="none" style={{textAlign: 'end'}}>
+                                <th
+                                    scope="col"
+                                    aria-sort="none"
+                                    className={styles.tableColumnHeader}
+                                    style={{textAlign: 'end'}}
+                                >
                                     {__('Amount', 'give')}
                                 </th>
-                                <th scope="col" aria-sort="none">
+                                <th scope="col" aria-sort="none" className={styles.tableColumnHeader}>
                                     {__('Goal', 'give')}
                                 </th>
-                                <th scope="col" aria-sort="none">
+                                <th scope="col" aria-sort="none" className={styles.tableColumnHeader}>
                                     {__('Donations', 'give')}
                                 </th>
-                                <th scope="col" aria-sort="none">
+                                <th scope="col" aria-sort="none" className={styles.tableColumnHeader}>
                                     {__('Shortcode', 'give')}
                                 </th>
-                                <th scope="col" aria-sort="ascending">
+                                <th scope="col" aria-sort="ascending" className={styles.tableColumnHeader}>
                                     {__('Date', 'give')}
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className={styles.tableContent}>
                             {donationForms.map((form) => (
-                                <tr key={form.id}>
-                                    <th scope="row">
+                                <tr key={form.id} className={styles.tableRow}>
+                                    <th className={cx(styles.tableCell, styles.tableRowHeader)} scope="row">
                                         <a href={editDonationFormURL(form.id).href}>{form.name}</a>
                                         <div role="group" aria-label={__('Actions', 'give')}>
                                             <a href={editDonationFormURL(form.id).href} className={styles.action}>
@@ -133,11 +139,13 @@ function AdminDonationForms() {
                                             </button>
                                         </div>
                                     </th>
-                                    <td style={{textAlign: 'end'}}>{form.amount}</td>
-                                    <td>{form.goal ? form.goal : 'No Goal Set'}</td>
-                                    <td>{form.donations}</td>
-                                    <td>{form.shortcode}</td>
-                                    <td>{form.datetime}</td>
+                                    <td className={styles.tableCell} style={{textAlign: 'end'}}>
+                                        {form.amount}
+                                    </td>
+                                    <td className={styles.tableCell}>{form.goal ? form.goal : 'No Goal Set'}</td>
+                                    <td className={styles.tableCell}>{form.donations}</td>
+                                    <td className={styles.tableCell}>{form.shortcode}</td>
+                                    <td className={styles.tableCell}>{form.datetime}</td>
                                 </tr>
                             ))}
                         </tbody>

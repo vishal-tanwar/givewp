@@ -109,78 +109,6 @@
     border-radius: inherit;
     border-spacing: 0;
     inline-size: 100%;
-
-    & thead {
-        & th {
-            border-bottom: 0.0625em solid #ddd;
-            color: #0878b0;
-            font-weight: 700;
-            padding: 1em;
-            text-align: start;
-        }
-    }
-
-    & tbody {
-        overflow: auto;
-
-        & tr {
-            &:nth-child(even) {
-                background-color: #fff;
-            }
-
-            &:nth-child(odd) {
-                background-color: #f6f7f7;
-            }
-
-            &:hover td:first-child > .rowActions,
-            &:focus-within td:first-child > .rowActions {
-                opacity: 1;
-            }
-        }
-
-        & th[scope="row"] a {
-            color: var(--give-primary-color);
-            font-size: 1.125rem;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        & td, th {
-            padding-block-start: 1em;
-            padding-block-end: 2.5em;
-            padding-inline: 1em;
-            text-align: start;
-        }
-
-        & :is(td, th):first-child {
-            position: relative;
-
-            & > .rowActions {
-                position: absolute;
-                inset-inline-start: calc(100% + 1em);
-                inset-block-end: 0.6875rem;
-                display: flex;
-                column-gap: 1em;
-                opacity: 0;
-                transition: opacity 180ms ease-in;
-
-                &:focus {
-                    opacity: 1;
-                }
-
-                & > a {
-                    color: #0878b0;
-                    text-decoration: none;
-                    font-size: 0.8125rem;
-
-                    &[href="#delete"] {
-                        color: #d75a4b;
-                    }
-                }
-            }
-        }
-    }
-
 }
 
 /* Visually hidden class omitting position: absolute since that breaks the table
@@ -194,6 +122,42 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+}
+
+.tableColumnHeader {
+    border-bottom: 0.0625em solid #ddd;
+    color: #0878b0;
+    font-weight: 700;
+    padding: 1em;
+    text-align: start;
+}
+
+.tableContent {
+    overflow: auto;
+}
+
+.tableRow {
+    &:nth-child(odd) {
+        background-color: #f6f7f7;
+    }
+
+    &:nth-child(even) {
+        background-color: #fff;
+    }
+}
+
+.tableRowHeader > a {
+    color: var(--give-primary-color);
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.tableCell {
+    padding-block-start: 1em;
+    padding-block-end: 2.5em;
+    padding-inline: 1em;
+    text-align: start;
 }
 
 .pageHeader {
