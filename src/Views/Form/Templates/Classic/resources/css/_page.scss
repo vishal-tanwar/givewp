@@ -33,8 +33,12 @@ body {
 
 .give-form-closed {
     margin: 1rem;
-    padding-block: fn.scaleBetween(4rem, 8rem);
-    padding-inline: fn.scaleBetween(2rem, 4rem);
+    --padding-block: fn.scaleBetween(4rem, 8rem);
+    padding-block-start: var(--padding-block);
+    padding-block-end: var(--padding-block);
+    --padding-inline: fn.scaleBetween(2rem, 4rem);
+    padding-inline-start: var(--padding-inline);
+    padding-inline-end: var(--padding-inline);
     display: flex;
     justify-content: center;
     box-shadow: 0 0 0.5em rgb(0 0 0 / 0.1);

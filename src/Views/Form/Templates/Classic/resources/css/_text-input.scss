@@ -19,8 +19,10 @@
 
 .give-label {
     display: flex;
-    padding-block: 10px;
-    padding-inline: 0;
+    padding-block-start: 10px;
+    padding-block-end: 10px;
+    padding-inline-start: 0;
+    padding-inline-end: 0;
 
     .give-required-indicator {
         margin-inline-start: 5px;

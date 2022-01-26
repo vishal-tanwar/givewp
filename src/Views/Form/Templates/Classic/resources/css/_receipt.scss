@@ -10,7 +10,8 @@
 
     .give-receipt-title {
         position: relative;
-        margin-block: 2rem;
+        margin-block-start: 2rem;
+        margin-block-end: 2rem;
         font-size: 1.625rem;
         font-weight: 600;
         line-height: 1.2;
@@ -23,9 +24,15 @@
         align-items: center;
         row-gap: 1.25rem;
         background: #fbfbfb;
-        border-block: 0.0625rem solid #f2f2f2;
-        padding-block: fn.scaleBetween(1.5rem, 2.5rem);
-        padding-inline: 1.25rem;
+        --border-block: 0.0625rem solid #f2f2f2;
+        border-block-start: var(--border-block);
+        border-block-end: var(--border-block);
+        --padding-block: fn.scaleBetween(1.5rem, 2.5rem);
+        padding-block-start: var(--padding-block-start);
+        padding-block-end: var(--padding-block-start);
+        --padding-inline: 1.25rem;
+        padding-inline-start: var(--padding-inline);
+        padding-inline-end: var(--padding-inline);
 
         .instruction {
             line-height: 1.5;
@@ -163,7 +170,9 @@
         align-items: center;
         margin-block-start: 2rem;
         padding-block-end: fn.scaleBetween(1.5rem, 3.625rem);
-        padding-inline: fn.scaleBetween(1.25rem, 4.25rem);
+        $paddingInline: fn.scaleBetween(1.25rem, 4.25rem);
+        padding-inline-start: $paddingInline;
+        padding-inline-end: $paddingInline;
 
         .dashboard-link {
             color: var(--give-primary-color);
@@ -179,8 +188,10 @@
 
         .download-btn {
             font-size: inherit;
-            padding-block: 0.75rem;
-            padding-inline: 1.6875rem;
+            padding-block-start: 0.75rem;
+            padding-block-end: 0.75rem;
+            padding-inline-start: 1.6875rem;
+            padding-inline-end: 1.6875rem;
         }
     }
 
@@ -206,7 +217,9 @@
 .give-receipt-classic {
     .receipt-sections {
         padding-block-start: fn.scaleBetween(2.375rem, 3rem);
-        padding-inline: fn.scaleBetween(1.25rem, 4.25rem);
+        $paddingInline: fn.scaleBetween(1.25rem, 4.25rem);
+        padding-inline-start: $paddingInline;
+        padding-inline-end: $paddingInline;
     }
 
     .details + .details {
@@ -234,7 +247,8 @@
     }
 
     .details-row {
-        padding-block: 0.9375rem;
+        padding-block-start: 0.9375rem;
+        padding-block-end: 0.9375rem;
     }
 
     // Donor Details

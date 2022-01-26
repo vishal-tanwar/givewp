@@ -11,8 +11,10 @@
         @extend .give-amount-heading;
         grid-column: span 12;
         margin: 0 !important;
-        padding-block: 0.625rem !important;
-        padding-inline: 0 !important;
+        padding-block-start: 0.625rem !important;
+        padding-block-end: 0.625rem !important;
+        padding-inline-start: 0 !important;
+        padding-inline-end: 0 !important;
         line-height: 1.2;
         inline-size: 100%;
     }
@@ -20,8 +22,10 @@
     .give-tributes-label {
         display: block;
         font-weight: 500;
-        padding-block: 0.625rem;
-        padding-inline: 0;
+        padding-block-start: 0.625rem;
+        padding-block-end: 0.625rem;
+        padding-inline-start: 0;
+        padding-inline-end: 0;
     }
 
     .give_tributes_info_wrap {
