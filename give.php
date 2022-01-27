@@ -42,6 +42,7 @@
  */
 
 use Give\Container\Container;
+use Give\DonationForms\ServiceProvider as DonationFormsServiceProvider;
 use Give\DonationSummary\ServiceProvider as DonationSummaryServiceProvider;
 use Give\DonorDashboards\ServiceProvider as DonorDashboardsServiceProvider;
 use Give\Form\LegacyConsumer\ServiceProvider as FormLegacyConsumerServiceProvider;
@@ -167,6 +168,7 @@ final class Give
         Give\Email\ServiceProvider::class,
         DonationSummaryServiceProvider::class,
         PaymentGatewaysServiceProvider::class,
+        DonationFormsServiceProvider::class
     ];
 
     /**
@@ -241,12 +243,6 @@ final class Give
         $this->setupExceptionHandler();
 
         $this->loadServiceProviders();
-
-        // Load form template
-        $this->templates->load();
-
-        // Load routes.
-        $this->routeForm->init();
 
         /**
          * Fire the action after Give core loads.
