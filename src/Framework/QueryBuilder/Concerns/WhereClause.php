@@ -36,7 +36,7 @@ trait WhereClause
      *
      * @return $this
      */
-    private function setWhere($column, $value, $comparisonOperator, $logicalOperator)
+    protected function setWhere($column, $value, $comparisonOperator, $logicalOperator)
     {
         // If the columns is a Closure instance, we will assume the developer
         // wants to begin a nested where statement which is wrapped in parentheses.
