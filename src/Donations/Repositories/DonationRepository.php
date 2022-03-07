@@ -10,7 +10,7 @@ use Give\Donations\ValueObjects\DonationMode;
 use Give\Framework\Database\DB;
 use Give\Framework\Exceptions\Primitives\InvalidArgumentException;
 use Give\Framework\Models\Traits\InteractsWithTime;
-use Give\Framework\QueryBuilder\QueryBuilder;
+use Give\Framework\QueryBuilder\ModelQueryBuilder as QueryBuilder;
 use Give\Helpers\Call;
 use Give\Helpers\Hooks;
 use Give\Log\Log;
@@ -79,7 +79,6 @@ class DonationRepository
         $initialDonationId = give()->subscriptions->getInitialDonationId($subscriptionId);
 
         $renewals = $this->prepareQuery()
-            ->where('post_type', 'give_payment')
             ->where('post_status', 'give_subscription')
             ->whereIn('ID', function (QueryBuilder $builder) use ($subscriptionId) {
                 $builder
@@ -102,7 +101,6 @@ class DonationRepository
     public function queryByDonorId($donorId)
     {
         return $this->prepareQuery()
-            ->where('post_type', 'give_payment')
             ->whereIn('ID', function (QueryBuilder $builder) use ($donorId) {
                 $builder
                     ->select('donation_id')
@@ -405,6 +403,7 @@ class DonationRepository
     public function getFormTitle($formId)
     {
         $form = DB::table('posts')
+            ->select('post_title')
             ->where('id', $formId)
             ->get();
 
@@ -420,10 +419,10 @@ class DonationRepository
      */
     public function prepareQuery()
     {
-        return DB::table('posts')
-            ->setModel(Donation::class)
+        return (new QueryBuilder(Donation::class))
+            ->from('posts')
             ->select(
-                ['ID', 'id'],
+                'id',
                 ['post_date', 'createdAt'],
                 ['post_modified', 'updatedAt'],
                 ['post_status', 'status'],
@@ -431,10 +430,11 @@ class DonationRepository
             )
             ->attachMeta(
                 'give_donationmeta',
-                'ID',
+                'id',
                 'donation_id',
                 ...DonationMetaKeys::getColumnsForAttachMetaQuery()
-            );
+            )
+            ->where('post_type', 'give_payment');
     }
 
     /**
@@ -446,7 +446,6 @@ class DonationRepository
     public function getTotalDonationCountByDonorId($donorId)
     {
         return DB::table('posts')
-            ->where('post_type', 'give_payment')
             ->whereIn('ID', function (QueryBuilder $builder) use ($donorId) {
                 $builder
                     ->select('donation_id')
