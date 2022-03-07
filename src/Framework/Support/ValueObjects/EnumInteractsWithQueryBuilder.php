@@ -25,4 +25,27 @@ trait EnumInteractsWithQueryBuilder
 
         return $columns;
     }
+
+
+    /**
+     * @unreleased
+     *
+     * Returns array of meta aliases with corresponding columns
+     *
+     * [ ['firstName' => '_give_donor_billing_first_name'], etc. ]
+     *
+     * @return array
+     */
+    public static function getColumnsAliases()
+    {
+        $properties = [];
+
+        foreach (static::toArray() as $key => $value) {
+            $keyFormatted = static::camelCaseConstant($key);
+
+            $properties[$keyFormatted] = $value;
+        }
+
+        return $properties;
+    }
 }
