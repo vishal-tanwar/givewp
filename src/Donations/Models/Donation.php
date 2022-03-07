@@ -7,12 +7,13 @@ use Exception;
 use Give\Donations\DataTransferObjects\DonationQueryData;
 use Give\Donations\Factories\DonationFactory;
 use Give\Donations\Properties\BillingAddress;
+use Give\Donations\ValueObjects\DonationMetaKeys;
 use Give\Donations\ValueObjects\DonationMode;
 use Give\Donations\ValueObjects\DonationStatus;
 use Give\Framework\Exceptions\Primitives\InvalidArgumentException;
 use Give\Framework\Models\Contracts\ModelCrud;
-use Give\Framework\Models\Contracts\ModelHasFactory;
-use Give\Framework\Models\Model;
+use Give\Framework\DataTransferObjects\MetaTableData;
+use Give\Framework\Models\ModelWithMeta;
 use Give\Framework\QueryBuilder\QueryBuilder;
 use Give\ValueObjects\Money;
 
@@ -44,7 +45,7 @@ use Give\ValueObjects\Money;
  * @property int $levelId
  * @property string $gatewayTransactionId
  */
-class Donation extends Model implements ModelCrud, ModelHasFactory
+class Donation extends ModelWithMeta implements ModelCrud
 {
     /**
      * @var string[]
@@ -79,7 +80,7 @@ class Donation extends Model implements ModelCrud, ModelHasFactory
      *
      * @unreleased
      *
-     * @param  int  $id
+     * @param int $id
      *
      * @return Donation
      */
@@ -92,7 +93,7 @@ class Donation extends Model implements ModelCrud, ModelHasFactory
     /**
      * @unreleased
      *
-     * @param  array  $attributes
+     * @param array $attributes
      *
      * @return Donation
      *
@@ -200,7 +201,7 @@ class Donation extends Model implements ModelCrud, ModelHasFactory
     /**
      * @unreleased
      *
-     * @param  object  $object
+     * @param object $object
      * @return Donation
      */
     public static function fromQueryBuilderObject($object)
@@ -214,5 +215,18 @@ class Donation extends Model implements ModelCrud, ModelHasFactory
     public static function factory()
     {
         return new DonationFactory(static::class);
+    }
+
+    /**
+     * @return MetaTableData
+     */
+    public static function metaTable()
+    {
+        return new MetaTableData(
+            'give_donationmeta',
+            'donation',
+            'donation_id',
+            DonationMetaKeys::getColumnsAliases()
+        );
     }
 }
