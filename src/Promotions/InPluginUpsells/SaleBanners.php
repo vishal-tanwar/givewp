@@ -134,6 +134,7 @@ class SaleBanners
      */
     public static function isShowing()
     {
+        return false;
         return isset($_GET['post_type']) && $_GET['post_type'] === 'give_forms';
     }
 }
