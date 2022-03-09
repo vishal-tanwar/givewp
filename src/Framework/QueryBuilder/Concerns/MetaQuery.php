@@ -95,31 +95,26 @@ trait MetaQuery
             $tableAlias = sprintf('%s_%s_%d', ($table instanceof RawSQL) ? $table->sql : $table, 'attach_meta', $i);
 
             if (strpos($column, '*')) {
-                // Set temporary alias
-                $tempTableAlias = $tableAlias . '_temp';
+                $column = str_replace('*', '', $column);
 
-                $query = sprintf(
-                    'CREATE TEMPORARY TABLE IF NOT EXISTS %s AS (SELECT DISTINCT meta_key as name FROM %s WHERE meta_key LIKE "%s")',
-                    $tempTableAlias,
-                    $metaTable->tableName,
-                    str_replace('*', '%', $column)
-                );
+                $query = DB::table(DB::raw($metaTable->tableName))
+                    ->distinct()
+                    ->select('meta_key')
+                    ->whereLike('meta_key', $column);
 
-                DB::query($query);
+                if ($metaColumns = $query->getAll()) {
+                    foreach ($metaColumns as $j => $metaColumn) {
 
-                if ($metaColumns = DB::table(DB::raw($tempTableAlias))->getAll()) {
-                    foreach ($metaColumns as $j => $column) {
+                        $dynamicTableAlias = sprintf('%s_temp_%d', $tableAlias, $i + $j);
 
-                        $tableAlias = sprintf('%s_%d', $tempTableAlias, $i + $j);
-
-                        $this->select(["{$tableAlias}.{$metaTable->valueColumnName}", $column->name]);
+                        $this->select(["{$dynamicTableAlias}.{$metaTable->valueColumnName}", $metaColumn->meta_key]);
 
                         $this->join(
-                            function (JoinQueryBuilder $builder) use ($table, $foreignKey, $primaryKey, $tableAlias, $column, $metaTable) {
+                            function (JoinQueryBuilder $builder) use ($table, $foreignKey, $primaryKey, $dynamicTableAlias, $metaColumn, $metaTable) {
                                 $builder
-                                    ->leftJoin($table, $tableAlias)
-                                    ->on($foreignKey, "{$tableAlias}.{$primaryKey}")
-                                    ->andOn("{$tableAlias}.{$metaTable->keyColumnName}", $column->name, true);
+                                    ->leftJoin($table, $dynamicTableAlias)
+                                    ->on($foreignKey, "{$dynamicTableAlias}.{$primaryKey}")
+                                    ->andOn("{$dynamicTableAlias}.{$metaTable->keyColumnName}", $metaColumn->meta_key, true);
                             }
                         );
                     }
