@@ -9,6 +9,7 @@ use Give\Donations\ValueObjects\DonationMetaKeys;
 use Give\Donations\ValueObjects\DonationMode;
 use Give\Donations\ValueObjects\DonationStatus;
 use Give\Framework\Support\Facades\DateTime\Temporal;
+use Give\Framework\Support\Facades\Str;
 
 /**
  * Class DonationData
