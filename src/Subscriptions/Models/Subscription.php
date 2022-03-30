@@ -136,12 +136,12 @@ class Subscription extends Model implements ModelCrud, ModelHasFactory
     /**
      * @unreleased
      *
-     * @return bool
+     * @return void
      * @throws Exception
      */
     public function delete()
     {
-        return give()->subscriptions->delete($this);
+        give()->subscriptions->delete($this);
     }
 
     /**

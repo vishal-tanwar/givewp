@@ -128,11 +128,13 @@ class Donor extends Model implements ModelCrud, ModelHasFactory
     /**
      * @unreleased
      *
+     * @return void
+     *
      * @throws Exception
      */
     public function delete()
     {
-        return give()->donors->delete($this);
+        give()->donors->delete($this);
     }
 
     /**

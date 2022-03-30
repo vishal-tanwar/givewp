@@ -36,7 +36,7 @@ interface ModelCrud
     /**
      * @unreleased
      *
-     * @return bool
+     * @return void
      */
     public function delete();
 

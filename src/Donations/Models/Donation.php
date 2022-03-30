@@ -136,13 +136,13 @@ class Donation extends Model implements ModelCrud, ModelHasFactory
     /**
      * @unreleased
      *
-     * @return bool
+     * @return void
      *
      * @throws Exception|InvalidArgumentException
      */
     public function delete()
     {
-        return give()->donations->delete($this);
+        give()->donations->delete($this);
     }
 
     /**

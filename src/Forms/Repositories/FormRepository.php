@@ -49,7 +49,7 @@ class FormRepository
     /**
      * @return ModelQueryBuilder<Form>
      */
-    protected function prepareQuery()
+    public function prepareQuery()
     {
         $builder = new ModelQueryBuilder(Form::class);
 

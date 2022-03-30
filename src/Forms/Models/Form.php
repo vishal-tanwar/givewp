@@ -7,6 +7,7 @@ use Give\Forms\ValueObjects\FormStatus;
 use Give\Framework\Models\Contracts\ModelCrud;
 use Give\Framework\Models\Contracts\ModelHasFactory;
 use Give\Framework\Models\Model;
+use Give\Framework\Models\ModelQueryBuilder;
 
 /**
  * @unreleased
@@ -38,14 +39,20 @@ class Form extends Model implements ModelCrud, ModelHasFactory
         // TODO: Implement save() method.
     }
 
+    /**
+     * @return void
+     */
     public function delete()
     {
-        // TODO: Implement delete() method.
+        give()->forms->delete($this);
     }
 
+    /**
+     * @return ModelQueryBuilder<Form>
+     */
     public static function query()
     {
-        // TODO: Implement query() method.
+        return give()->forms->prepareQuery();
     }
 
     public static function fromQueryBuilderObject($object)
