@@ -3,7 +3,9 @@
 namespace Give\Forms\Repositories;
 
 use Give\Forms\Models\Form;
+use Give\Framework\Database\DB;
 use Give\Framework\Models\ModelQueryBuilder;
+use Give\Helpers\Hooks;
 
 class FormRepository
 {
@@ -17,6 +19,31 @@ class FormRepository
         return $this->prepareQuery()
             ->where('ID', $formId)
             ->get();
+    }
+
+    public function insert(Form $form)
+    {
+    }
+
+    public function update(Form $form)
+    {
+    }
+
+    public function delete(Form $form)
+    {
+        Hooks::doAction('give_form_deleting', $form);
+
+        DB::transaction(static function() use($form) {
+            DB::table('posts')
+                ->where('id', $form->id)
+                ->delete();
+
+            DB::table('give_formmeta')
+                ->where('form_id', $form->id)
+                ->delete();
+        });
+
+        Hooks::doAction('give_form_deleted', $form);
     }
 
     /**

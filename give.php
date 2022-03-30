@@ -53,6 +53,8 @@ use Give\Donors\Repositories\DonorRepositoryProxy;
 use Give\Donors\ServiceProvider as DonorsServiceProvider;
 use Give\Form\LegacyConsumer\ServiceProvider as FormLegacyConsumerServiceProvider;
 use Give\Form\Templates;
+use Give\Forms\Repositories\FormRepository;
+use Give\Forms\ServiceProvider as FormsServiceProvider;
 use Give\Framework\Exceptions\UncaughtExceptionLogger;
 use Give\Framework\Migrations\MigrationsServiceProvider;
 use Give\LegacySubscriptions\ServiceProvider as LegacySubscriptionsServiceProvider;
@@ -109,6 +111,7 @@ if (!defined('ABSPATH')) {
  * @property-read Give_Session $session
  * @property-read Give_DB_Sessions $session_db
  * @property-read Give_Tooltips $tooltips
+ * @property-read FormRepository $forms
  * @property-read DonationRepository $donations
  * @property-read DonorRepositoryProxy $donors
  * @property-read SubscriptionRepository $subscriptions
@@ -187,7 +190,8 @@ final class Give
         SubscriptionServiceProvider::class,
         DonationFormsServiceProvider::class,
         PromotionsServiceProvider::class,
-        LegacySubscriptionsServiceProvider::class
+        LegacySubscriptionsServiceProvider::class,
+        FormsServiceProvider::class,
     ];
 
     /**
