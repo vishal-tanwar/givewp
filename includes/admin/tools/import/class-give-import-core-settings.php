@@ -242,8 +242,8 @@ if ( ! class_exists( 'Give_Import_Core_Settings' ) ) {
 				<th colspan="2">
 					<h2><?php echo $title; ?></h2>
 					<p>
-						<a class="button button-large button-secondary" href="<?php echo add_query_arg( $query_arg_success, admin_url( 'edit.php' ) ); ?>"><?php echo $text; ?></a>
-						<a class="button button-large button-secondary" href="<?php echo add_query_arg( $query_arg_setting, admin_url( 'edit.php' ) ); ?>"><?php echo __( 'View Settings', 'give' ); ?></a>
+						<a class="button button-large button-secondary" href="<?php echo esc_url( add_query_arg( $query_arg_success, admin_url( 'edit.php' ) ) ); ?>"><?php echo $text; ?></a>
+						<a class="button button-large button-secondary" href="<?php echo esc_url( add_query_arg( $query_arg_setting, admin_url( 'edit.php' ) ) ); ?>"><?php echo __( 'View Settings', 'give' ); ?></a>
 					</p>
 				</th>
 			</tr>
@@ -485,6 +485,7 @@ if ( ! class_exists( 'Give_Import_Core_Settings' ) ) {
 		public static function json_upload_mimes( $existing_mimes = array() ) {
 
 			$existing_mimes['json'] = 'application/json';
+            $existing_mimes['text'] = 'text/plain';        
 
 			return $existing_mimes;
 		}

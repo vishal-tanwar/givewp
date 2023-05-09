@@ -10,8 +10,10 @@
  */
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+use Give\Donations\ValueObjects\DonationMetaKeys;
+
+if (!defined('ABSPATH')) {
+    exit;
 }
 
 
@@ -80,6 +82,7 @@ class Give_Donor_Wall {
 	/**
 	 * Displays donors in a grid layout.
 	 *
+     * @since 2.27.0 Moved AJAX nonce verification to ajax_handler method.
 	 * @since  2.2.0
 	 *
 	 * @param array $atts                {
@@ -95,16 +98,16 @@ class Give_Donor_Wall {
 	 * @type bool   $show_name           Whether to display the donor's full name, first and last. Default 'true'.
 	 * @type bool   $show_company_name   Whether to display the donor's company name. Default 'false'.
 	 * @type bool   $show_total          Whether to display the donor's donation amount. Default 'true'.
-	 * @type bool   $show_time           Whether to display date of the last donation. Default 'true'.
 	 * @type bool   $show_comments       Whether to display the donor's comment if they left one. Default 'true'.
 	 * @type int    $comment_length      The number of words to display for the comments before a "Read more" field
 	 * @type int    $only_comments       Whether to display the donors only with comment. Default 'false'.
+     * @type bool   $show_time Whether to display date of the last donation. Default 'true'.
 	 *
 	 * @type string $readmore_text       Link label for modal in which donor can read full comment.
 	 * @type string $loadmore_text       Button label which will load more donor comments.
-	 * @type int    $avatar_size         Avatar image size in pixels without the "px". Default "60"
+	 * @type int    $avatar_size         Avatar image size in pixels without the "px". Default "75"
 	 * @type string $orderby             The order in which you want the donations to appear.
-	 *                                   Currently we are using this attribute internally and it will sort donations by created date.
+	 *                                   Currently we are using this attribute internally and, it will sort donations by created date.
 	 * @type string $order               The order in which you want the donors to appear. Accepts "ASC". "DESC".
 	 *
 	 * }
@@ -123,9 +126,18 @@ class Give_Donor_Wall {
 			ob_start();
 
 			foreach ( $donations as $donation ) {
-				// Give/templates/shortcode-donor-wall.php.
-				give_get_template( 'shortcode-donor-wall', [ $donation, $give_settings, $atts ] );
-			}
+                $donor = new Give_Donor($donation['_give_payment_donor_id']);
+                // Give/templates/shortcode-donor-wall.php.
+                give_get_template(
+                    'shortcode-donor-wall',
+                    [
+                        $donation,
+                        $give_settings,
+                        $atts,
+                        $donor
+                    ]
+                );
+            }
 
 			$html = ob_get_clean();
 
@@ -143,8 +155,9 @@ class Give_Donor_Wall {
 		$temp_atts['paged'] = $atts['paged'] + 1;
 
 		$more_btn_html = sprintf(
-			'<input type="hidden" class="give-donor-wall-shortcode-attrs" data-shortcode="%1$s">',
-			rawurlencode( http_build_query( $atts ) )
+			'<input type="hidden" class="give-donor-wall-shortcode-attrs" data-shortcode="%s" data-nonce="%s">',
+			rawurlencode( http_build_query( $atts ) ),
+            wp_create_nonce( 'givewp-donor-wall-more' )
 		);
 
 		if ( $this->has_donations( $temp_atts ) ) {
@@ -185,24 +198,26 @@ class Give_Donor_Wall {
 				'ids'               => '',
                 'cats'              => '',
                 'tags'              => '',
-				'columns'           => 'best-fit',
+				'columns'           => '3',
 				'anonymous'         => true,
 				'show_avatar'       => true,
 				'show_name'         => true,
 				'show_company_name' => false,
 				'show_form'         => false,
 				'show_total'        => true,
-				'show_time'         => true,
 				'show_comments'     => true,
-				'comment_length'    => 140,
+                'show_tributes'     => true,
+                'comment_length'    => 140,
 				'only_comments'     => false,
 				'readmore_text'     => esc_html__( 'Read more', 'give' ),
 				'loadmore_text'     => esc_html__( 'Load more', 'give' ),
-				'avatar_size'       => 60,
+				'avatar_size'       => 75,
+                'color'             => "#219653",
 				'orderby'           => 'post_date',
 				'order'             => 'DESC',
 				'hide_empty'        => true,  // Deprecated in 2.3.0
-				'only_donor_html'   => false, // Only for internal use.
+				'only_donor_html'   => false, // Only for internal use.,
+                'show_time'         => true,
 			],
 			$atts
 		);
@@ -214,12 +229,12 @@ class Give_Donor_Wall {
 			'show_name',
 			'show_company_name',
 			'show_total',
-			'show_time',
 			'show_comments',
-			'show_comments',
+			'show_tributes',
 			'hide_empty',
 			'only_comments',
 			'only_donor_html',
+            'show_time'
 		];
 
 		foreach ( $boolean_attributes as $att ) {
@@ -286,8 +301,9 @@ class Give_Donor_Wall {
 
 
 	/**
-	 * Ajax handler
+	 * This function should return donor comment for ajax request.
 	 *
+     * @since 2.27.0 Check nonce for AJAX request to prevent scrapping, see https://github.com/impress-org/givewp/issues/6374.
 	 * @since  2.2.0
 	 * @access public
 	 */
@@ -297,6 +313,8 @@ class Give_Donor_Wall {
 		// Get next page donor comments.
 		$shortcode_atts['paged']           = $shortcode_atts['paged'] + 1;
 		$shortcode_atts['only_donor_html'] = true;
+
+        check_ajax_referer( 'givewp-donor-wall-more', 'nonce' );
 
 		$donors_comment_html = $this->render_shortcode( $shortcode_atts );
 
@@ -320,6 +338,7 @@ class Give_Donor_Wall {
 	/**
 	 * Get query params
 	 *
+     * @since 2.24.1
 	 * @since 2.3.0
 	 *
 	 * @param  array $atts
@@ -334,10 +353,10 @@ class Give_Donor_Wall {
 
 		$query_atts['order']         = in_array( $atts['order'], $valid_order ) ? $atts['order'] : 'DESC';
 		$query_atts['orderby']       = in_array( $atts['orderby'], $valid_orderby ) ? $atts['orderby'] : 'post_date';
-		$query_atts['limit']         = $atts['donors_per_page'];
-		$query_atts['offset']        = $atts['donors_per_page'] * ( $atts['paged'] - 1 );
-		$query_atts['form_id']       = implode( '\',\'', explode( ',', $atts['form_id'] ) );
-		$query_atts['ids']           = implode( '\',\'', explode( ',', $atts['ids'] ) );
+		$query_atts['limit']         = absint( $atts['donors_per_page'] );
+		$query_atts['offset']        = absint( $atts['donors_per_page'] * ( $atts['paged'] - 1 ) );
+        $query_atts['form_id']       = implode( '\',\'', array_map( 'absint', explode( ',', $atts['form_id'] ) ) );
+        $query_atts['ids']           = implode( '\',\'', array_map( 'absint', explode( ',', $atts['ids'] ) ) );
 		$query_atts['cats']          = $atts['cats'];
 		$query_atts['tags']          = $atts['tags'];
 		$query_atts['only_comments'] = ( true === $atts['only_comments'] );
@@ -346,15 +365,16 @@ class Give_Donor_Wall {
 		return $query_atts;
 	}
 
-	/**
-	 * Get donation data.
-	 *
-	 * @since 2.3.0
-	 *
-	 * @param array $atts
-	 *
-	 * @return array
-	 */
+    /**
+     * Get donation data.
+     *
+     * @since 2.27.0 Change to read comment from donations meta table
+     * @since 2.3.0
+     *
+     * @param  array  $atts
+     *
+     * @return array
+     */
 	private function get_donation_data( $atts = [] ) {
 		global $wpdb;
 
@@ -391,8 +411,6 @@ class Give_Donor_Wall {
 				}
 			}
 
-			$comments = $this->get_donor_comments( $temp );
-
 			if ( ! empty( $temp ) ) {
 				foreach ( $temp as $donation_id => $donation_data ) {
 					$temp[ $donation_id ]['donation_id'] = $donation_id;
@@ -404,7 +422,10 @@ class Give_Donor_Wall {
 						]
 					);
 
-					$temp[ $donation_id ]['donor_comment'] = ! empty( $comments[ $donation_id ] ) ? $comments[ $donation_id ] : '';
+					$temp[$donation_id]['donor_comment'] = give_get_payment_meta(
+                        $donation_id,
+                        DonationMetaKeys::COMMENT
+                    );
 				}
 			}
 
@@ -601,7 +622,7 @@ class Give_Donor_Wall {
 	}
 
     /**
-     * @unreleased
+     * @since 2.20.0
      *
      * @param string $string
      * @param null|callable $filter

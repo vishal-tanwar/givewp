@@ -2,6 +2,7 @@
 
 namespace Give\PaymentGateways\Stripe\Admin;
 
+use Give\Framework\Http\ConnectServer\Client\ConnectClient;
 use Give\PaymentGateways\Stripe\Repositories\AccountDetail;
 use Give\PaymentGateways\Stripe\Repositories\Settings;
 use Give_Admin_Settings;
@@ -23,7 +24,7 @@ use function give_stripe_is_premium_active;
  * Class AccountManagerSettingField
  *
  * @package Give\PaymentGateways\Stripe\Admin
- * @since 2.13.0
+ * @since   2.13.0
  */
 class AccountManagerSettingField
 {
@@ -48,17 +49,29 @@ class AccountManagerSettingField
     private $settings;
 
     /**
+     * @since 2.25.0
+     *
+     * @var ConnectClient
+     */
+    private $connectClient;
+
+    /**
      * AccountManagerSettingField constructor.
      *
-     * @since 2.13.0
+     * @since 2.25.0 Use 'ConnectClient' class
+     * @since      2.13.0
      *
      * @param AccountDetail $accountDetailRepository
      * @param Settings      $settings
      */
-    public function __construct(AccountDetail $accountDetailRepository, Settings $settings)
-    {
+    public function __construct(
+        AccountDetail $accountDetailRepository,
+        Settings $settings,
+        ConnectClient $connectClient
+    ) {
         $this->accountDetailRepository = $accountDetailRepository;
         $this->settings = $settings;
+        $this->connectClient = $connectClient;
     }
 
     /**
@@ -219,7 +232,7 @@ class AccountManagerSettingField
                      *
                      * @since 2.7.0
                      *
-                     * @param array $this- >stripeAccounts  All Stripe accounts.
+                     * @param array $stripeAccounts All Stripe accounts.
                      *
                      */
                     do_action('give_stripe_premium_manual_api_fields', $this->stripeAccounts);
@@ -247,22 +260,22 @@ class AccountManagerSettingField
             return;
         }
 
-        $disconnectUrl = add_query_arg(
+        $disconnectUrl = esc_url_raw(add_query_arg(
             [
                 'account_type' => $stripeAccount['type'],
                 'action' => 'disconnect_stripe_account',
                 'account_slug' => $stripeAccountSlug,
             ],
             wp_nonce_url(admin_url('admin-ajax.php'), 'give_disconnect_connected_stripe_account_' . $stripeAccountSlug)
-        );
+        ));
 
-        $editStatementDescriptorUrl = add_query_arg(
+        $editStatementDescriptorUrl = esc_url_raw(add_query_arg(
             [
                 'action' => 'edit_stripe_account_statement_descriptor',
                 'account-slug' => $stripeAccountSlug,
             ],
             admin_url('admin-ajax.php')
-        );
+        ));
 
         $classes = $stripeAccountSlug === $this->defaultStripeAccountSlug ? ' give-stripe-boxshadow-option-wrap__selected' : '';
         ?>
@@ -292,7 +305,8 @@ class AccountManagerSettingField
                 <span class="give-stripe-label"><?php
                     esc_html_e('Account name:', 'give'); ?></span>
                 <span class="give-stripe-connect-data-field">
-                    <?php echo esc_html($accountName); ?>
+                    <?php
+                    echo esc_html($accountName); ?>
                 </span>
             </div>
 
@@ -324,7 +338,8 @@ class AccountManagerSettingField
 
             <div class="give-stripe-account-fieldset give-stripe-connection-method">
                 <span class="give-stripe-label">
-                    <?php esc_html_e('Connection Method:', 'give'); ?>
+                    <?php
+                    esc_html_e('Connection Method:', 'give'); ?>
                 </span>
                 <div class="give-stripe-connect-data-field">
                     <?php
@@ -334,7 +349,8 @@ class AccountManagerSettingField
 
             <div class="give-stripe-account-fieldset give-stripe-statement-descriptor">
                 <span class="give-stripe-label">
-                    <?php esc_html_e('Statement Descriptor:', 'give'); ?>
+                    <?php
+                    esc_html_e('Statement Descriptor:', 'give'); ?>
                     <?php
                     echo sprintf(
                         '<a href="%s" target="_blank">%s</a>',
@@ -344,7 +360,7 @@ class AccountManagerSettingField
                                     'This is the text that appears on your donor\'s bank statements. This is typically the name of your website or organization. Click on this icon to read more about Stripe statement text requirements.',
                                     'give'
                                 ),
-                                'size' => 'medium'
+                                'size' => 'medium',
                             ]
                         )
                     );
@@ -352,17 +368,22 @@ class AccountManagerSettingField
                 </span>
                 <div
                     class="give-stripe-connect-data-field"
-                    data-action-url="<?php echo $editStatementDescriptorUrl; ?>"
+                    data-action-url="<?php
+                    echo $editStatementDescriptorUrl; ?>"
                 >
-                    <?php echo $stripeAccount['statement_descriptor']; ?>
-                    <?php if ($this->isGlobalSettingPage()): ?>
+                    <?php
+                    echo $stripeAccount['statement_descriptor']; ?>
+                    <?php
+                    if ($this->isGlobalSettingPage()): ?>
                         <span class="give-stripe-edit-statement-descriptor">
                             <a class="give-stripe-edit-statement-descriptor-btn" href="#">
                                 <span class="dashicons dashicons-edit-page"></span>
-                                <?php esc_html_e('Edit', 'give'); ?>
+                                <?php
+                                esc_html_e('Edit', 'give'); ?>
                             </a>
                         </span>
-                    <?php endif; ?>
+                    <?php
+                    endif; ?>
                 </div>
             </div>
 
@@ -404,12 +425,15 @@ class AccountManagerSettingField
                         1 === count($this->stripeAccounts)
                     ) :?>
                         <span class="give-stripe-account-disconnect">
-                            <a class="give-stripe-disconnect-account-btn" href="<?php echo $disconnectUrl; ?>">
+                            <a class="give-stripe-disconnect-account-btn" href="<?php
+                            echo $disconnectUrl; ?>">
                                 <span class="dashicons dashicons-editor-unlink"></span>
-                                <?php esc_html_e('Disconnect', 'give'); ?>
+                                <?php
+                                esc_html_e('Disconnect', 'give'); ?>
                             </a>
                         </span>
-                    <?php endif; ?>
+                    <?php
+                    endif; ?>
                 </div>
             </div>
 
@@ -572,7 +596,8 @@ class AccountManagerSettingField
     }
 
     /**
-     * @since 2.13.0
+     * @since 2.25.0 Use 'ConnectClient' class
+     * @since      2.13.0
      * @return string
      */
     public function getStripeConnectButtonMarkup()
@@ -597,7 +622,7 @@ class AccountManagerSettingField
                 'website_url' => get_bloginfo('url'),
                 'give_stripe_connected' => '0',
             ],
-            esc_url_raw('https://connect.givewp.com/stripe/connect.php')
+            esc_url_raw($this->connectClient->getApiUrl('stripe/connect.php'))
         );
 
         $stripeSvgIcon = '<svg width="15" height="21" viewBox="0 0 15 21" fill="none" xmlns="http://www.w3.org/2000/svg">

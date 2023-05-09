@@ -8,14 +8,15 @@ use Give\Framework\FieldsAPI\Field;
 
 trait HasNodes
 {
-
-    /** @var Node[] */
+    /**
+     * @var Node[]
+     */
     protected $nodes = [];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
-    public function getNodeIndexByName($name)
+    public function getNodeIndexByName(string $name)
     {
         foreach ($this->nodes as $index => $node) {
             if ($node->getName() === $name) {
@@ -23,38 +24,45 @@ trait HasNodes
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
+     *
+     * @return Node|null
      */
-    public function getNodeByName($name)
+    public function getNodeByName(string $name)
     {
         foreach ($this->nodes as $node) {
             if ($node->getName() === $name) {
                 return $node;
             }
             if ($node instanceof Collection) {
-                return $node->getNodeByName($name);
+                $nestedNode = $node->getNodeByName($name);
+                if ($nestedNode !== null) {
+                    return $nestedNode;
+                }
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
-    public function all()
+    public function all(): array
     {
         return $this->nodes;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
+     *
+     * @return Field[]
      */
-    public function getFields()
+    public function getFields(): array
     {
         $fields = [];
 
@@ -62,7 +70,11 @@ trait HasNodes
             if ($node instanceof Field) {
                 $fields[] = $node;
             } elseif ($node instanceof Collection) {
-                $fields = array_merge($fields, $node->getFields());
+                $nestedFields = $node->getFields();
+
+                foreach($nestedFields as $field) {
+                    $fields[] = $field;
+                }
             }
         }
 
@@ -70,9 +82,9 @@ trait HasNodes
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
-    public function count()
+    public function count(): int
     {
         return count($this->nodes);
     }

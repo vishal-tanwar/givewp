@@ -72,12 +72,16 @@ abstract class Field
     public $defaultValue = null;
 
     /**
-     * Field attribues.
+     * Field attributes.
      *
      * @since 2.7.0
      * @var string
      */
     public $attributes = [];
+
+    final public function __construct()
+    {
+    }
 
     /**
      * Parse field arguments

@@ -3,15 +3,14 @@
 namespace Give\Donors\Factories;
 
 use Give\Framework\Models\Factories\ModelFactory;
+use Give\Framework\Support\ValueObjects\Money;
 
 class DonorFactory extends ModelFactory
 {
     /**
      * @since 2.19.6
-     *
-     * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         $firstName = $this->faker->firstName;
         $lastName = $this->faker->lastName;
@@ -19,7 +18,9 @@ class DonorFactory extends ModelFactory
             'firstName' => $firstName,
             'lastName' => $lastName,
             'name' => trim("$firstName $lastName"),
-            'email' => $this->faker->email
+            'email' => $this->faker->email,
+            'totalAmountDonated' => new Money(0, 'USD'),
+            'totalNumberOfDonations' => 0
         ];
     }
 }

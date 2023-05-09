@@ -3,6 +3,7 @@
 namespace Give\Subscriptions\Repositories;
 
 use Exception;
+use Give\Donations\ValueObjects\DonationMetaKeys;
 use Give\Framework\Database\DB;
 use Give\Framework\Exceptions\Primitives\InvalidArgumentException;
 use Give\Framework\Models\ModelQueryBuilder;
@@ -10,13 +11,13 @@ use Give\Framework\Support\Facades\DateTime\Temporal;
 use Give\Helpers\Hooks;
 use Give\Log\Log;
 use Give\Subscriptions\Models\Subscription;
+use Give\Subscriptions\ValueObjects\SubscriptionMode;
 
 /**
  * @since 2.19.6
  */
 class SubscriptionRepository
 {
-
     /**
      * @var string[]
      */
@@ -26,39 +27,64 @@ class SubscriptionRepository
         'frequency',
         'amount',
         'status',
-        'donationFormId'
+        'donationFormId',
     ];
 
     /**
      * @since 2.19.6
      *
-     * @param  int  $subscriptionId
-     * @return Subscription
+     * @return Subscription|null
      */
-    public function getById($subscriptionId)
+    public function getById(int $subscriptionId)
     {
         return $this->queryById($subscriptionId)->get();
     }
 
     /**
+     * @since 2.27.0  Add support for multiple return types.
+     * @since 2.21.0
+     *
+     * @return Subscription|null
+     */
+    public function getByGatewaySubscriptionId(string $gatewaySubscriptionId)
+    {
+        return $this->queryByGatewaySubscriptionId($gatewaySubscriptionId)->get();
+    }
+
+    /**
      * @since 2.19.6
      *
-     * @param  int  $subscriptionId
-     * @return ModelQueryBuilder
+     * @param int $subscriptionId
+     *
+     * @return ModelQueryBuilder<Subscription>
      */
-    public function queryById($subscriptionId)
+    public function queryById(int $subscriptionId): ModelQueryBuilder
     {
         return $this->prepareQuery()
             ->where('id', $subscriptionId);
     }
 
     /**
+     * @since 2.21.0
+     *
+     * @param string $gatewayTransactionId
+     *
+     * @return ModelQueryBuilder<Subscription>
+     */
+    public function queryByGatewaySubscriptionId(string $gatewayTransactionId): ModelQueryBuilder
+    {
+        return $this->prepareQuery()
+            ->where('profile_id', $gatewayTransactionId);
+    }
+
+    /**
      * @since 2.19.6
      *
-     * @param  int  $donationId
-     * @return ModelQueryBuilder
+     * @param int $donationId
+     *
+     * @return ModelQueryBuilder<Subscription>
      */
-    public function queryByDonationId($donationId)
+    public function queryByDonationId(int $donationId): ModelQueryBuilder
     {
         return $this->prepareQuery()
             ->where('parent_payment_id', $donationId);
@@ -67,10 +93,11 @@ class SubscriptionRepository
     /**
      * @since 2.19.6
      *
-     * @param  int  $donorId
-     * @return ModelQueryBuilder
+     * @param int $donorId
+     *
+     * @return ModelQueryBuilder<Subscription>
      */
-    public function queryByDonorId($donorId)
+    public function queryByDonorId(int $donorId): ModelQueryBuilder
     {
         return $this->prepareQuery()
             ->where('customer_id', $donorId);
@@ -79,11 +106,9 @@ class SubscriptionRepository
     /**
      * @since 2.19.6
      *
-     * @param  int  $id
-     *
      * @return object[]
      */
-    public function getNotesBySubscriptionId($id)
+    public function getNotesBySubscriptionId(int $id): array
     {
         $notes = DB::table('comments')
             ->select(
@@ -103,43 +128,47 @@ class SubscriptionRepository
     }
 
     /**
+     * @since 2.24.0 add payment_mode column to insert
+     * @since 2.21.0 replace actions with givewp_subscription_creating and givewp_subscription_created
      * @since 2.19.6
      *
-     * @param  Subscription  $subscription
-     *
-     * @return Subscription
+     * @return void
      * @throws Exception
      */
     public function insert(Subscription $subscription)
     {
         $this->validateSubscription($subscription);
 
-        Hooks::doAction('give_subscription_creating', $subscription);
+        if ($subscription->renewsAt === null) {
+            $subscription->bumpRenewalDate();
+        }
 
-        $date = $subscription->createdAt ? Temporal::getFormattedDateTime(
-            $subscription->createdAt
-        ) : Temporal::getCurrentFormattedDateForDatabase();
+        Hooks::doAction('givewp_subscription_creating', $subscription);
+
+        $dateCreated = Temporal::withoutMicroseconds($subscription->createdAt ?: Temporal::getCurrentDateTime());
 
         DB::query('START TRANSACTION');
 
         try {
             DB::table('give_subscriptions')->insert([
-                'created' => $date,
+                'created' => Temporal::getFormattedDateTime($dateCreated),
+                'expiration' => Temporal::getFormattedDateTime($subscription->renewsAt),
                 'status' => $subscription->status->getValue(),
-                'profile_id' => isset($subscription->gatewaySubscriptionId) ? $subscription->gatewaySubscriptionId : '',
+                'profile_id' => $subscription->gatewaySubscriptionId ?? '',
                 'customer_id' => $subscription->donorId,
                 'period' => $subscription->period->getValue(),
                 'frequency' => $subscription->frequency,
-                'initial_amount' => $subscription->amount,
-                'recurring_amount' => $subscription->amount,
-                'recurring_fee_amount' => isset($subscription->feeAmount) ? $subscription->feeAmount : 0,
-                'bill_times' => isset($subscription->installments) ? $subscription->installments : 0,
-                'transaction_id' => isset($subscription->transactionId) ? $subscription->transactionId : '',
-                'product_id' => $subscription->donationFormId
+                'initial_amount' => $subscription->amount->formatToDecimal(),
+                'recurring_amount' => $subscription->amount->formatToDecimal(),
+                'recurring_fee_amount' => $subscription->feeAmountRecovered !== null ? $subscription->feeAmountRecovered->formatToDecimal(
+                ) : 0,
+                'bill_times' => $subscription->installments,
+                'transaction_id' => $subscription->transactionId ?? '',
+                'product_id' => $subscription->donationFormId,
+                'payment_mode' => $subscription->mode->getValue(),
             ]);
         } catch (Exception $exception) {
             DB::query('ROLLBACK');
-
 
             Log::error('Failed creating a subscription', compact('subscription'));
 
@@ -150,26 +179,29 @@ class SubscriptionRepository
 
         $subscriptionId = DB::last_insert_id();
 
-        $subscription = $this->getById($subscriptionId);
+        $subscription->id = $subscriptionId;
+        $subscription->createdAt = $dateCreated;
 
-        Hooks::doAction('give_subscription_created', $subscription);
-
-        return $subscription;
+        Hooks::doAction('givewp_subscription_created', $subscription);
     }
 
     /**
+     * @since 2.24.0 add payment_mode column to update
+     * @since 2.21.0 replace actions with givewp_subscription_updating and givewp_subscription_updated
      * @since 2.19.6
      *
-     * @param  Subscription  $subscription
-     *
-     * @return Subscription
+     * @return void
      * @throws Exception
      */
     public function update(Subscription $subscription)
     {
         $this->validateSubscription($subscription);
 
-        Hooks::doAction('give_subscription_updating', $subscription);
+        if ($subscription->renewsAt === null) {
+            throw new InvalidArgumentException('renewsAt is required.');
+        }
+
+        Hooks::doAction('givewp_subscription_updating', $subscription);
 
         DB::query('START TRANSACTION');
 
@@ -182,12 +214,14 @@ class SubscriptionRepository
                     'customer_id' => $subscription->donorId,
                     'period' => $subscription->period->getValue(),
                     'frequency' => $subscription->frequency,
-                    'initial_amount' => $subscription->amount,
-                    'recurring_amount' => $subscription->amount,
-                    'recurring_fee_amount' => isset($subscription->feeAmount) ? $subscription->feeAmount : 0,
-                    'bill_times' => isset($subscription->installments) ? $subscription->installments : 0,
-                    'transaction_id' => $subscription->transactionId,
-                    'product_id' => $subscription->donationFormId
+                    'initial_amount' => $subscription->amount->formatToDecimal(),
+                    'recurring_amount' => $subscription->amount->formatToDecimal(),
+                    'recurring_fee_amount' => isset($subscription->feeAmountRecovered) ? $subscription->feeAmountRecovered->formatToDecimal(
+                    ) : 0,
+                    'bill_times' => $subscription->installments,
+                    'transaction_id' => $subscription->transactionId ?? '',
+                    'product_id' => $subscription->donationFormId,
+                    'payment_mode' => $subscription->mode->getValue(),
                 ]);
         } catch (Exception $exception) {
             DB::query('ROLLBACK');
@@ -199,33 +233,29 @@ class SubscriptionRepository
 
         DB::query('COMMIT');
 
-        $subscriptionId = DB::last_insert_id();
-
-        $subscription = $this->getById($subscriptionId);
-
-        Hooks::doAction('give_subscription_updating', $subscription);
-
-        return $subscription;
+        Hooks::doAction('givewp_subscription_updated', $subscription);
     }
 
     /**
+     * @since 2.21.0 replace actions with givewp_subscription_deleting and givewp_subscription_deleted
+     * @since 2.20.0 consolidate meta deletion into a single query
      * @since 2.19.6
-     *
-     * @param  Subscription  $subscription
-     *
-     * @return bool
      *
      * @throws Exception
      */
-    public function delete(Subscription $subscription)
+    public function delete(Subscription $subscription): bool
     {
-        Hooks::doAction('give_subscription_deleting', $subscription);
+        Hooks::doAction('givewp_subscription_deleting', $subscription);
 
         DB::query('START TRANSACTION');
 
         try {
             DB::table('give_subscriptions')
                 ->where('id', $subscription->id)
+                ->delete();
+
+            DB::table('give_subscriptionmeta')
+                ->where('subscription_id', $subscription->id)
                 ->delete();
         } catch (Exception $exception) {
             DB::query('ROLLBACK');
@@ -237,20 +267,42 @@ class SubscriptionRepository
 
         DB::query('COMMIT');
 
-        Hooks::doAction('give_subscription_deleted', $subscription);
+        Hooks::doAction('givewp_subscription_deleted', $subscription);
 
         return true;
     }
 
     /**
+     * Up to this point the donation is created first and then the subscription, and the donation is stored as the
+     * parent_payment_id of the subscription. This is backwards and should not be the case. But legacy code depends on
+     * this value, so we still need to store it for now.
+     *
+     * This should only be used when creating a new Subscription with its corresponding Donation. Do not add this value
+     * to the Subscription model as it should not be reference moving forward.
+     *
+     * @since 2.24.0 Save payment mode to subscription meta
+     * @since 2.23.0
+     *
+     * @return void
+     */
+    public function updateLegacyParentPaymentId(int $subscriptionId, int $donationId)
+    {
+        $mode = give_get_meta($donationId, DonationMetaKeys::MODE, true) ?? (give_is_test_mode() ? 'test' : 'live');
+
+        DB::table('give_subscriptions')
+            ->where('id', $subscriptionId)
+            ->update([
+                'parent_payment_id' => $donationId,
+                'payment_mode' => $mode,
+            ]);
+    }
+
+    /**
      * @since 2.19.6
      *
-     * @param  int  $subscriptionId
-     * @param  array  $columns
-     * @return bool
      * @throws Exception
      */
-    public function updateLegacyColumns($subscriptionId, $columns)
+    public function updateLegacyColumns(int $subscriptionId, array $columns): bool
     {
         foreach (Subscription::propertyKeys() as $key) {
             if (array_key_exists($key, $columns)) {
@@ -278,27 +330,52 @@ class SubscriptionRepository
     }
 
     /**
+     * Sets the payment mode for a given subscription
+     *
+     * @since 2.24.0
+     *
+     * @return void
+     */
+    public function updatePaymentMode(int $subscriptionId, SubscriptionMode $mode)
+    {
+        DB::table('give_subscriptions')
+            ->where('id', $subscriptionId)
+            ->update([
+                'payment_mode' => $mode->getValue(),
+            ]);
+    }
+
+    /**
+     * @since 2.23.0 update to no longer rely on parent_payment_id column as it will be deprecated
      * @since 2.19.6
      *
-     * @param  int  $subscriptionId
      * @return int|null
      */
-    public function getInitialDonationId($subscriptionId)
+    public function getInitialDonationId(int $subscriptionId)
     {
-        $query = DB::table('give_subscriptions')
-            ->where('id', $subscriptionId)
-            ->select(['parent_payment_id', 'initialDonationId'])
+        $query = DB::table('posts')
+            ->select('ID')
+            ->attachMeta(
+                'give_donationmeta',
+                'ID',
+                'donation_id',
+                [DonationMetaKeys::SUBSCRIPTION_ID, 'subscriptionId'],
+                [DonationMetaKeys::SUBSCRIPTION_INITIAL_DONATION, 'initialDonationId']
+            )
+            ->where('give_donationmeta_attach_meta_subscriptionId.meta_value', $subscriptionId)
+            ->where('give_donationmeta_attach_meta_initialDonationId.meta_value', 1)
             ->get();
 
         if (!$query) {
             return null;
         }
 
-        return (int)$query->initialDonationId;
+        return (int)$query->ID;
     }
 
     /**
-     * @param  Subscription  $subscription
+     * @since 2.19.6
+     *
      * @return void
      */
     private function validateSubscription(Subscription $subscription)
@@ -319,7 +396,7 @@ class SubscriptionRepository
      *
      * @return ModelQueryBuilder<Subscription>
      */
-    public function prepareQuery()
+    public function prepareQuery(): ModelQueryBuilder
     {
         $builder = new ModelQueryBuilder(Subscription::class);
 
@@ -327,17 +404,25 @@ class SubscriptionRepository
             ->select(
                 'id',
                 ['created', 'createdAt'],
-                ['expiration', 'expiresAt'],
+                ['expiration', 'renewsAt'],
                 ['customer_id', 'donorId'],
                 'period',
                 ['frequency', 'frequency'],
                 ['bill_times', 'installments'],
                 ['transaction_id', 'transactionId'],
+                ['payment_mode', 'mode'],
                 ['recurring_amount', 'amount'],
                 ['recurring_fee_amount', 'feeAmount'],
                 'status',
                 ['profile_id', 'gatewaySubscriptionId'],
                 ['product_id', 'donationFormId']
+            )
+            ->attachMeta(
+                'give_donationmeta',
+                'parent_payment_id',
+                'donation_id',
+                [DonationMetaKeys::GATEWAY, 'gatewayId'],
+                [DonationMetaKeys::CURRENCY, 'currency']
             );
     }
 }

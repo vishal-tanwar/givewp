@@ -6,7 +6,7 @@ namespace Give\PaymentGateways\DataTransferObjects;
  * Class SubscriptionData
  * @since 2.18.0
  */
-class SubscriptionData
+final class SubscriptionData
 {
     /**
      * @var string
@@ -27,10 +27,8 @@ class SubscriptionData
      * Convert data from request into DTO
      *
      * @since 2.18.0
-     *
-     * @return self
      */
-    public static function fromRequest(array $request)
+    public static function fromRequest(array $request): SubscriptionData
     {
         $self = new static();
 
@@ -39,19 +37,5 @@ class SubscriptionData
         $self->frequency = $request['frequency'];
 
         return $self;
-    }
-
-    /**
-     * @param  int  $subscriptionId
-     * @return GatewaySubscriptionData
-     */
-    public function toGatewaySubscriptionData($subscriptionId)
-    {
-        return GatewaySubscriptionData::fromArray([
-            'period' => $this->period,
-            'times' => $this->times,
-            'frequency' => $this->frequency,
-            'subscriptionId' => $subscriptionId,
-        ]);
     }
 }

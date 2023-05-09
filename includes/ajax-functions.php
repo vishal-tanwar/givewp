@@ -130,7 +130,7 @@ function give_get_ajax_url( $query = [] ) {
 		$ajax_url = add_query_arg( $query, $ajax_url );
 	}
 
-	return apply_filters( 'give_ajax_url', $ajax_url );
+	return esc_url_raw( apply_filters( 'give_ajax_url', $ajax_url ) );
 }
 
 /**
@@ -792,7 +792,7 @@ function give_modal_ajax_url( $args = [] ) {
 		]
 	);
 
-	return add_query_arg( $args, admin_url( '/admin-ajax.php' ) );
+	return esc_url_raw( add_query_arg( $args, admin_url( '/admin-ajax.php' ) ) );
 }
 
 
@@ -811,6 +811,16 @@ function give_get_content_by_ajax_handler() {
 	if ( empty( $_GET['url'] ) ) {
 		die();
 	}
+
+    /**
+     * Restrict requests to GiveWP.com plugin readme.txt file only.
+     * @link https://owasp.org/www-community/attacks/Server_Side_Request_Forgery
+     *
+     * @since 2.25.2
+     */
+    if(! preg_match('^https://givewp.com/downloads/plugins/(.*)/readme.txt$^', $_GET['url'])) {
+        die();
+    }
 
 	// Handle changelog render request.
 	if (

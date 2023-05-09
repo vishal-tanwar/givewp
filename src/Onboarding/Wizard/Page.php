@@ -4,11 +4,13 @@ namespace Give\Onboarding\Wizard;
 
 defined('ABSPATH') || exit;
 
+use Give\DonationForms\DonationFormsAdminPage;
 use Give\Helpers\EnqueueScript;
 use Give\Onboarding\FormRepository;
 use Give\Onboarding\Helpers\FormatList;
 use Give\Onboarding\Helpers\LocationList;
 use Give\Onboarding\LocaleCollection;
+use Give\Onboarding\SettingsRepository;
 use Give\Onboarding\SettingsRepositoryFactory;
 use Give\Onboarding\Setup\Page as SetupPage;
 
@@ -41,6 +43,7 @@ class Page
     /**
      * @param FormRepository $formRepository
      * @param SettingsRepositoryFactory $settingsRepositoryFactory
+     * @param LocaleCollection $localeCollection
      */
     public function __construct(
         FormRepository $formRepository,
@@ -118,12 +121,7 @@ class Page
             null
         );
 
-        wp_enqueue_style(
-            'give-google-font-open-sans',
-            'https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap',
-            [],
-            null
-        );
+        wp_enqueue_style('givewp-admin-fonts');
 
         $formID = $this->formRepository->getDefaultFormID();
         $featureGoal = get_post_meta($formID, '_give_goal_option', true);
@@ -141,7 +139,7 @@ class Page
             'apiNonce' => wp_create_nonce('wp_rest'),
             'setupUrl' => SetupPage::getSetupPageEnabledOrDisabled() === SetupPage::ENABLED ?
                 admin_url('edit.php?post_type=give_forms&page=give-setup') :
-                admin_url('edit.php?post_type=give_forms'),
+                DonationFormsAdminPage::getUrl(),
             'formPreviewUrl' => admin_url('?page=give-form-preview'),
             'localeCurrency' => $this->localeCollection->pluck('currency_code'),
             'currencies' => FormatList::fromKeyValue(give_get_currencies_list()),

@@ -6,9 +6,11 @@ use Give\Framework\Migrations\MigrationsRegister;
 use Give\Helpers\Hooks;
 use Give\Log\Commands\FlushLogsCommand;
 use Give\Log\Helpers\Environment;
+use Give\Log\Migrations\CompleteRemovedLegacyLogMigration;
 use Give\Log\Migrations\CreateNewLogTable;
 use Give\Log\Migrations\DeleteOldLogTables;
 use Give\Log\Migrations\MigrateExistingLogs;
+use Give\Log\Migrations\RemoveSensitiveLogs;
 use Give\ServiceProviders\ServiceProvider;
 use WP_CLI;
 
@@ -57,7 +59,11 @@ class LogServiceProvider implements ServiceProvider
      */
     private function registerMigrations()
     {
-        give(MigrationsRegister::class)->addMigration(CreateNewLogTable::class);
+        give(MigrationsRegister::class)->addMigrations([
+            CreateNewLogTable::class,
+            RemoveSensitiveLogs::class,
+            CompleteRemovedLegacyLogMigration::class
+        ]);
 
         // Check if Logs migration batch processing is completed
         if (give_has_upgrade_completed(MigrateExistingLogs::id())) {

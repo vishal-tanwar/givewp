@@ -12,13 +12,12 @@ import {
 import {
     IS_CURRENCY_SWITCHING_ACTIVE,
     IS_DONATION_SUMMARY_ACTIVE,
-    IS_FEE_RECOVERY_ACTIVE,
     IS_RECURRING_ACTIVE,
     IS_STRIPE_ACTIVE,
 } from './is-feature-active.js';
 
 // This must be called ASAP (since this is used when DOMContentLoaded happens)
-// It doesn’t use anything inside the body.
+// It does not use anything inside the body.
 IS_STRIPE_ACTIVE && setStripeElementStyles();
 
 // Transforms document for classic template
@@ -38,7 +37,6 @@ domIsReady(() => {
     setupDonationLevels();
     moveDefaultGatewayDataIntoActiveGatewaySection();
     IS_DONATION_SUMMARY_ACTIVE && moveDonationSummaryAfterDonationAmountSection();
-    IS_FEE_RECOVERY_ACTIVE && attachFeeEvents() && updateFeesAmount();
     IS_RECURRING_ACTIVE && attachRecurringDonationEvents();
     splitGatewayResponse();
     IS_CURRENCY_SWITCHING_ACTIVE && setupCurrencySwitcherSelector();
@@ -47,7 +45,6 @@ domIsReady(() => {
     moveTestModeMessage();
     IS_CURRENCY_SWITCHING_ACTIVE && moveCurrencySwitcherMessageOutsideOfWrapper();
     addFancyBorderWhenChecked();
-    IS_DONATION_SUMMARY_ACTIVE && updateDonationSummaryAmountOnChange();
 });
 
 /**
@@ -95,8 +92,6 @@ function moveDonationSummaryAfterDonationAmountSection() {
         // Move to before gateway section inside give-personal-info-section
         paymentDetails.parentNode.insertBefore(donationSummary, paymentDetails);
     }
-
-    updateDonationSummaryAmount();
 }
 
 function setPersonalInfoTitle() {
@@ -230,7 +225,10 @@ function addTooltipToLevel(node) {
     const parent = node.parentNode;
     if (!node.getAttribute('has-tooltip')) {
         const tooltip = nodeFromString(
-            h('span', {className: 'give-tooltip hint--top hint--bounce', 'aria-label': node.innerHTML})
+            h('span', {
+                className: 'give-tooltip hint--top hint--bounce',
+                'aria-label': parent.getAttribute('aria-label'),
+            })
         );
         if (node.innerHTML.length < 50) {
             tooltip.classList.add('narrow');
@@ -248,11 +246,11 @@ function moveDefaultGatewayDataIntoActiveGatewaySection() {
 
     addSelectedGatewayDetails(createGatewayDetails());
 
-    document
-        .querySelector('.give-gateway-details')
-        .append(...document.querySelectorAll('#give_purchase_form_wrap fieldset:not(.give-donation-submit)'));
+    const purchaseFormWrap = document.querySelector('#give_purchase_form_wrap');
+    purchaseFormWrap.removeChild(purchaseFormWrap.querySelector('.give-donation-submit'));
+    document.querySelector('.give-gateway-details').append(...purchaseFormWrap.children);
 
-    removeNode(document.querySelector('#give_purchase_form_wrap'));
+    removeNode(purchaseFormWrap);
 }
 
 function attachRecurringDonationEvents() {
@@ -286,34 +284,6 @@ function updateRecurringDonationFrequency() {
     if (adminChoice) {
         window.GiveDonationSummary.handleAdminDefinedRecurringFrequency(adminChoice, form);
     }
-}
-
-function updateDonationSummaryAmount() {
-    document.querySelector('[data-tag="amount"]').innerHTML = document.querySelector('#give-amount').value;
-}
-
-function updateDonationSummaryAmountOnChange() {
-    document.querySelector('#give-amount').addEventListener('change', function(e){
-        document.querySelector('[data-tag="amount"]').innerHTML = GiveDonationSummary.format_amount(e.target.value, jQuery('.give-form'));
-    } );
-}
-
-
-function attachFeeEvents() {
-    const coverFeesCheckbox = document.querySelector('.give_fee_mode_checkbox');
-
-    if (coverFeesCheckbox) {
-        coverFeesCheckbox.addEventListener('change', updateFeesAmount);
-        new MutationObserver(updateFeesAmount).observe(document.querySelector('.give-fee-message-label-text'), {
-            childList: true,
-        });
-    } else {
-        jQuery('.js-give-donation-summary-fees').hide();
-    }
-}
-
-function updateFeesAmount() {
-    window.GiveDonationSummary.handleFees(document.querySelector('.give_fee_mode_checkbox'), jQuery('.give-form'));
 }
 
 function splitGatewayResponse() {
@@ -379,8 +349,6 @@ function splitGatewayResponse() {
                         );
 
                     window.GiveDonationSummary.initTotal();
-                    updateDonationSummaryAmount();
-                    IS_FEE_RECOVERY_ACTIVE && updateFeesAmount();
                 }
 
                 // Remove previous gateway data (just in case it was added again by multiple clicks)
@@ -403,7 +371,7 @@ function splitGatewayResponse() {
 const createGatewayDetails = () => nodeFromString(`<div class="give-gateway-details"></div>`);
 
 const addSelectedGatewayDetails = (gatewayDetailsNode) =>
-    document.querySelector('.give-gateway-option-selected > .give-gateway-option').after(gatewayDetailsNode);
+    jQuery('.give-gateway-option-selected > .give-gateway-option').after(gatewayDetailsNode);
 
 window.GiveClassicTemplate = {
     share: (element) => {
@@ -444,7 +412,7 @@ function setRecurringPeriodSelectWidth() {
         }
 
         // Update after the fonts load.
-        // Note: FontFaceSet’s loadingdone doesn’t seem to work in Safari.
+        // Note: FontFaceSet’s loadingdone does not seem to work in Safari.
         document.fonts.ready.then(updateWidth);
 
         // Update when the value changes.

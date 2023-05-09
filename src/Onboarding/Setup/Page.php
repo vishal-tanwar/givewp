@@ -8,6 +8,8 @@
 
 namespace Give\Onboarding\Setup;
 
+use Give\DonationForms\DonationFormsAdminPage;
+
 defined('ABSPATH') || exit;
 
 /**
@@ -22,7 +24,7 @@ class Page
     const DISABLED = 'disabled';
 
     /**
-     * Dissmiss the Setup Page.
+     * Dismiss the Setup Page.
      *
      * @since 2.8.0
      */
@@ -31,7 +33,7 @@ class Page
         if (wp_verify_nonce($_GET['_wpnonce'], 'dismiss_setup_page')) {
             give_update_option('setup_page_enabled', self::DISABLED);
 
-            wp_redirect(add_query_arg(['post_type' => 'give_forms'], admin_url('edit.php')));
+            wp_redirect(DonationFormsAdminPage::getUrl());
             exit;
         }
     }
@@ -57,12 +59,11 @@ class Page
     {
         add_submenu_page(
             'edit.php?post_type=give_forms',
-            esc_html__('Setup GiveWP', 'give'),
+            esc_html__('Set up GiveWP', 'give'),
             esc_html__('Setup', 'give'),
             'manage_give_settings',
             'give-setup',
-            [$this, 'render_page'],
-            $position = 0
+            [$this, 'render_page']
         );
     }
 
@@ -73,7 +74,7 @@ class Page
      */
     public function enqueue_scripts()
     {
-        if ( ! isset($_GET['page']) || 'give-setup' !== $_GET['page']) {
+        if (!isset($_GET['page']) || 'give-setup' !== $_GET['page']) {
             return;
         }
 
@@ -83,12 +84,7 @@ class Page
             [],
             GIVE_VERSION
         );
-        wp_enqueue_style(
-            'give-admin-setup-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap',
-            [],
-            GIVE_VERSION
-        );
+        wp_enqueue_style('givewp-admin-fonts');
         wp_enqueue_script(
             'give-admin-setup-script',
             GIVE_PLUGIN_URL . 'assets/dist/js/admin-setup.js',

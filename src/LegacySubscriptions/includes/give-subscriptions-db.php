@@ -3,9 +3,9 @@
  * Give Recurring Subscription DB
  *
  * @package     Give
- * @copyright   Copyright (c) 2016, GiveWP
- * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
+ * @copyright   Copyright (c) 2016, GiveWP
  */
 
 // Exit if accessed directly
@@ -44,11 +44,13 @@ class Give_Subscriptions_DB extends Give_DB
      * Get columns and formats
      *
      * @access  public
+     *
+     * @since 2.24.0 add payment_mode column
      * @since   1.0
      */
     public function get_columns()
     {
-        return array(
+        return [
             'id' => '%d',
             'customer_id' => '%d',
             'period' => '%s',
@@ -62,10 +64,11 @@ class Give_Subscriptions_DB extends Give_DB
             'product_id' => '%d',
             'created' => '%s',
             'expiration' => '%s',
+            'payment_mode' => '%s',
             'status' => '%s',
             'notes' => '%s',
             'profile_id' => '%s',
-        );
+        ];
     }
 
 
@@ -77,7 +80,7 @@ class Give_Subscriptions_DB extends Give_DB
      */
     public function get_column_defaults()
     {
-        return array(
+        return [
             'customer_id' => 0,
             'period' => '',
             'frequency' => 1,
@@ -93,22 +96,23 @@ class Give_Subscriptions_DB extends Give_DB
             'status' => '',
             'notes' => '',
             'profile_id' => '',
-        );
+        ];
     }
 
     /**
      * Get subscription by specific data
      *
-     * @param  int  $column
-     * @param  int  $row_id
-     *
-     * @return mixed|object
      * @since 1.6
      *
+     * @param int $row_id
+     *
+     * @param int $column
+     *
+     * @return mixed|object
      */
     public function get_by($column, $row_id)
     {
-        $cache_key = Give_Cache::get_key("{$column}_{$row_id}", array($column, $row_id), false);
+        $cache_key = Give_Cache::get_key("{$column}_{$row_id}", [$column, $row_id], false);
         $subscription = Give_Recurring_Cache::get_subscription($cache_key);
 
         if (is_null($subscription)) {
@@ -122,10 +126,11 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Get subscription
      *
-     * @param  int  $row_id
+     * @since 1.6
+     *
+     * @param int $row_id
      *
      * @return mixed|object
-     * @since 1.6
      */
     public function get($row_id)
     {
@@ -143,17 +148,20 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Update subscription
      *
-     * @param  int  $row_id
-     * @param  array  $data
-     * @param  string  $where
-     *
-     * @return bool
      * @since 1.6
      *
+     * @param array $data
+     * @param string $where
+     *
+     * @param int $row_id
+     *
+     * @return bool
      */
-    public function update($row_id, $data = array(), $where = '')
+    public function update($row_id, $data = [], $where = '')
     {
         $status = parent::update($row_id, $data, $where);
+
+        Give_Recurring_Cache::get_instance()->flush_on_subscription_update($status, $row_id, $data, $where);
 
         /**
          * Fire the action when subscriptions updated
@@ -162,17 +170,18 @@ class Give_Subscriptions_DB extends Give_DB
          */
         do_action('give_subscription_updated', $status, $row_id, $data, $where);
 
+
         return $status;
     }
 
     /**
      * Create subscription
      *
-     * @param  array  $data
-     *
-     * @return int|mixed
      * @since 1.6
      *
+     * @param array $data
+     *
+     * @return int|mixed
      */
     public function create($data)
     {
@@ -191,7 +200,7 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Delete subscription
      *
-     * @param  int  $subscription_id
+     * @param int $subscription_id
      *
      * @return bool
      */
@@ -215,18 +224,18 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Retrieve all subscriptions for a donor.
      *
-     * @param  array  $args
+     * @since   1.0
+     *
+     * @param array $args
      *
      * @access  public
      * @return Give_Subscription[]
-     * @since   1.0
-     *
      */
-    public function get_subscriptions($args = array())
+    public function get_subscriptions($args = [])
     {
         global $wpdb;
 
-        $defaults = array(
+        $defaults = [
             'number' => 20,
             'offset' => 0,
             'search' => '',
@@ -234,7 +243,7 @@ class Give_Subscriptions_DB extends Give_DB
             'customer_id' => 0,
             'orderby' => 'id',
             'order' => 'DESC',
-        );
+        ];
 
         $args = wp_parse_args($args, $defaults);
 
@@ -284,11 +293,11 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Count the total number of subscriptions in the database.
      *
-     * @param  array  $args
+     * @param array $args
      *
      * @return int|array/null
      */
-    public function count($args = array())
+    public function count($args = [])
     {
         global $wpdb;
 
@@ -309,7 +318,7 @@ class Give_Subscriptions_DB extends Give_DB
 
             // Simplify result if query for groupBy.
             if ($group_by_args && $result) {
-                $temp = array();
+                $temp = [];
                 foreach ($result as $data) {
                     $temp[$data[$group_by_args]] = $data['COUNT(id)'];
                 }
@@ -369,7 +378,7 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Get Renewing Subscriptions
      *
-     * @param  string  $period
+     * @param string $period
      *
      * @return array|bool|mixed|null|object
      */
@@ -377,25 +386,23 @@ class Give_Subscriptions_DB extends Give_DB
     {
         global $wpdb;
 
-        $args = array(
+        $args = [
             'number' => 99999,
             'status' => 'active',
             'offset' => 0,
             'orderby' => 'id',
             'order' => 'DESC',
-            'expiration' => array(
+            'expiration' => [
                 'start' => date('Y-m-d H:i:s', strtotime($period . ' midnight')),
                 'end' => date('Y-m-d H:i:s', strtotime($period . ' midnight') + (DAY_IN_SECONDS - 1)),
-            ),
-        );
+            ],
+        ];
 
         $cache_key = Give_Cache::get_key('give_renewing_subscriptions', $args, false);
         $subscriptions = Give_Recurring_Cache::get_db_query($cache_key);
 
         if (is_null($subscriptions)) {
             $where = $this->generate_where_clause($args);
-            $where .= ' AND `bill_times` != 0';
-            $where .= ' AND ( SELECT COUNT(ID) FROM ' . $wpdb->prefix . 'posts WHERE `post_parent` = ' . $this->table_name . '.`parent_payment_id` OR `ID` = ' . $this->table_name . '.`parent_payment_id` ) + 1 < `bill_times`';
 
             $query = $wpdb->prepare(
                 "SELECT * FROM  $this->table_name $where ORDER BY {$args['orderby']} {$args['order']} LIMIT %d,%d;",
@@ -412,7 +419,7 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Get expiring subscriptions.
      *
-     * @param  string  $period
+     * @param string $period
      *
      * @return array|bool|mixed|null|object
      */
@@ -420,17 +427,17 @@ class Give_Subscriptions_DB extends Give_DB
     {
         global $wpdb;
 
-        $args = array(
+        $args = [
             'number' => 99999,
             'status' => 'active',
             'offset' => 0,
             'orderby' => 'id',
             'order' => 'DESC',
-            'expiration' => array(
+            'expiration' => [
                 'start' => date('Y-m-d H:i:s', strtotime($period . ' midnight')),
                 'end' => date('Y-m-d H:i:s', strtotime($period . ' midnight') + (DAY_IN_SECONDS - 1)),
-            ),
-        );
+            ],
+        ];
 
         $cache_key = Give_Cache::get_key('give_expiring_subscriptions', $args, false);
         $subscriptions = Give_Recurring_Cache::get_db_query($cache_key);
@@ -455,12 +462,13 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Generate a cache key from args.
      *
-     * @param $prefix
-     * @param $args
-     *
-     * @return string
      * @deprecated 1.6
      *
+     * @param $args
+     *
+     * @param $prefix
+     *
+     * @return string
      */
     protected function generate_cache_key($prefix, $args)
     {
@@ -470,11 +478,11 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Build the query args for subscriptions.
      *
-     * @param  array  $args
+     * @param array $args
      *
      * @return string The mysql "where" query part.
      */
-    public function generate_where_clause($args = array())
+    public function generate_where_clause($args = [])
     {
         $where = ' WHERE 1=1';
 
@@ -578,7 +586,7 @@ class Give_Subscriptions_DB extends Give_DB
     /**
      * Build the query args for subscriptions.
      *
-     * @param  string  $groupby
+     * @param string $groupby
      *
      * @return string The mysql "where" query part.
      */
@@ -592,6 +600,8 @@ class Give_Subscriptions_DB extends Give_DB
     }
 
     /**
+     * @since 2.26.0 Replace deprecated get_page_by_title() with give_get_page_by_title().
+     *
      * @param $args
      *
      * @return string
@@ -625,7 +635,7 @@ class Give_Subscriptions_DB extends Give_DB
             $where .= " AND `id` = " . absint($args['search']) . "";
         } else {
             // See if search matches a product name
-            $form = get_page_by_title(trim($args['search']), OBJECT, 'give_forms');
+            $form = give_get_page_by_title(trim($args['search']), OBJECT, 'give_forms');
             if ($form) {
                 $args['search'] = $form->ID;
                 $where .= " AND `product_id` = " . absint($args['search']) . "";
@@ -635,10 +645,10 @@ class Give_Subscriptions_DB extends Give_DB
                     "
 				SELECT id,name FROM {$donors_db->table_name}
 				WHERE name
-				LIKE '%%%s%%'",
-                    $args['search']
+				LIKE '%s'",
+                    '%' . $args['search'] . '%'
                 );
-                $subscription_donor_id = array();
+                $subscription_donor_id = [];
                 $donor_ids = $wpdb->get_results($query, ARRAY_A);
                 if (!empty($donor_ids) && count($donor_ids) > 0) {
                     foreach ($donor_ids as $key => $val) {

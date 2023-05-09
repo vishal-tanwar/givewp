@@ -4,13 +4,13 @@ namespace Give\Framework\FieldsAPI;
 
 use Give\Framework\FieldsAPI\Contracts\Collection;
 use Give\Framework\FieldsAPI\Contracts\Node;
+use Give\Framework\FieldsAPI\Exceptions\TypeNotSupported;
 
 /**
  * @since 2.12.0
  */
 class Form implements Node, Collection
 {
-
     use Concerns\HasLabel;
     use Concerns\HasName;
     use Concerns\HasNodes;
@@ -24,16 +24,38 @@ class Form implements Node, Collection
 
     const TYPE = 'form';
 
+    /**
+     * @since 2.23.1 Make constructor as private to avoid unsafe usage of `new static()`.
+     *
+     * @param $name
+     */
     public function __construct($name)
     {
         $this->name = $name;
     }
 
-    /**
-     * @since 2.14.0
-     */
-    public static function make($name)
+    public function getNodeType(): string
     {
-        return new static($name);
+        return 'group';
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param Section[] $nodes
+     *
+     * @throws TypeNotSupported
+     */
+    public function append(Node ...$nodes)
+    {
+        foreach ($nodes as $node) {
+            if ( ! $node instanceof Section) {
+                throw new TypeNotSupported($node->getType());
+            }
+
+            $this->insert($node);
+        }
+
+        return $this;
     }
 }

@@ -1,11 +1,11 @@
 === GiveWP - Donation Plugin and Fundraising Platform ===
-Contributors: givewp, dlocc, webdevmattcrom, ravinderk, mehul0810, kevinwhoffman, jason_the_adams, henryholtgeerts, kbjohnson90, alaca, benmeredithgmailcom
+Contributors: givewp, dlocc, webdevmattcrom, ravinderk, mehul0810, kevinwhoffman, jason_the_adams, henryholtgeerts, kbjohnson90, alaca, benmeredithgmailcom, jonwaldstein, joshuadinh, glaubersilvawp, pauloiankoski
 Donate link: https://go.givewp.com/home
 Tags: donation, donate, recurring donations, fundraising, crowdfunding
 Requires at least: 5.0
-Tested up to: 5.9
-Requires PHP: 5.6
-Stable tag: 2.19.7
+Tested up to: 6.2
+Requires PHP: 7.0
+Stable tag: 2.27.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -60,7 +60,7 @@ With more than 100,000+ active installs of GiveWP, we hear more and more success
 
 * [The City Mission used GiveWP](https://go.givewp.com/cmstory) for Giving Tuesday and a competition fundraiser with a neighboring organization, where they raised $45K in 16 hours.
 * [A local neighborhood watch program](https://go.givewp.com/memstory) switched from using GoFundMe to GiveWP and raised $40,000 in five days for a memorial fundraiser. 
-* [Students have funded their tuition](https://go.givewp.com/tuitionstory) to schools like Oxford through individual fundraising pages. 
+* [Fans of Ivan the Gorilla have kept his memory alive](https://go.givewp.com/readivan) by fundraising for a conservancy program in his name. 
 * [A hospital raised money](https://go.givewp.com/twiststory) through a community-wide virtual dance party during the pandemic. 
 
 In addition to nonprofit organizations, GiveWP is widely used for individual or creative purposes. We’ve seen tip jars for blogs or musicians, live streams, and more. Our [Donation Upsells for WooCommerce Add-on](https://go.givewp.com/wooread) is even used in some eCommerce stores to collect donations for a cause, or ask for tips in the cart or checkout.
@@ -83,12 +83,13 @@ For new users, we suggest reviewing our [Getting Started Guide](https://go.givew
 
 If you are a GiveWP customer with an active license of any of our popular add-ons, we'd love to hear from you and support you via our [Priority Support channel](https://go.givewp.com/support).
 
-=== 💳 Accept Credit Card Donations ===
+=== 💳 Accept Credit Card Donations and More ===
 
 GiveWP comes with several payment gateway options:
 
-* **Stripe Donations** -- Our Stripe integration allows you to accept credit card donations on your website. There is a small 2% fee associated with these donations. Want no additional fees? Upgrade to our Stripe Premium add-on to start accepting [Stripe Donations]](https://go.givewp.com/addon-stripe).
+* **Stripe Donations** -- Our Stripe integration allows you to accept credit card donations on your website. There is a small 2% fee associated with these donations. Want no additional fees? Upgrade to our Stripe Premium add-on to start accepting [Stripe Donations](https://go.givewp.com/addon-stripe).
 * **PayPal Donations** -- Allow worldwide donations with PayPal Donations. No additional fees applied.
+* **Venmo Donations** -- Give donors the option to pay through Venmo with their account balance or connected bank account. 
 * **Offline Donations** -- Enable your donors to send checks or physical donations with an offline gateway with instructions.
 * **Test Gateway** -- use the Test Gateway to see exactly how your donors will walk through the donation process.
 * **And many more Gateways** - View additional payment gateways on our website. These include Authorize.net, Bitpay, Square, Razorpay, Paytm, and more.
@@ -127,6 +128,13 @@ Are you a developer? GiveWP is built with best practices and easy to extend and 
 * [Site Redesigns Without Donation Data Loss](https://go.givewp.com/datalossdoc)
 * [Handling Custom CSS in WordPress](https://go.givewp.com/cssdoc)
 
+=== 🚀 Join the Journey to Create the Next Generation of WordPress Donation Forms === 
+Team Give has been working hard for the past several years on updating how donation forms are created. The user experience is going to change for the better, but we want your help shaping what that means! 
+
+Help us test our new visual form builder with the GiveWP 3.0 Feature plugin. The Feaure Plugin (or GiveWP 3.0 Beta) is meant to be used alongside GiveWP core on a staging or local environment. We are looking specifically at the form builder with this beta test and would love for all GiveWP users to give it a try. All feedback is welcome! [Download the beta plugin directly on WordPress](https://go.givewp.com/corewppg) or through your admin dashboard plugins area. 
+
+Learn more about how we're creating the next generation of WordPress donation forms, [directly on our website](https://go.givewp.com/corenextgen).
+
 === 💚 About the GiveWP Team ===
 
 GiveWP is part of StellarWP, a Liquid Web Family Brand. Our donation plugin is backed by a growing team of WordPress developers, support engineers, customer success managers, and marketing professionals who’ve worked with WordPress and nonprofits since 2009. This means GiveWP is made with best practices in mind; extremely extensible and customizable, stable, and reliable. We’ll be here in years to come for you and your nonprofit organization.
@@ -143,11 +151,11 @@ Stay in touch with us for important plugin news and updates:
 
 === 🐱‍💻 Contribute to GiveWP ===
 
-This plugin is proudly open source (GPL license) and we’re always looking for more contributors. Whether you know another language, can code like no one’s business, or just have an idea, we would love your help and input.
+This plugin is proudly open source (GPL license) and we’re always looking for more contributors. Whether you know another language, love to code, or just have an idea, we would love your help and input.
 
 Here’s a few ways you can contribute to GiveWP:
 
-* Star/fork/watch the [GiveWP GitHub repository](https://go.givewp.com/github "Visit the GiveWP GitHub Repo") to learn more about what issues we're tackling and the project is developing. If you've never worked with Github before, learn about [pull requests here](https://help.github.com/articles/about-pull-requests/) and submit one for GiveWP, we'd love to give you our feedback.
+* Star/fork/watch the [GiveWP GitHub repository](https://go.givewp.com/github) to learn more about what issues we're tackling and the project is developing. If you've never worked with Github before, learn about [pull requests here](https://help.github.com/articles/about-pull-requests/) and submit one for GiveWP, we'd love to give you our feedback.
 
 * Translate GiveWP into your native language. The best place to do that is here on wordpress.org. Go to [https://translate.wordpress.org/](https://translate.wordpress.org/projects/wp-plugins/give), then search for your language, click the "Plugins" tab, then search for "GiveWP". When you've submitted at least 95% of GiveWP's strings, the language moderators will review and approve your translations and then they will be available to all WordPress users for your native language. If you are interested in translating any of our Premium Add-ons, [contact us](https://go.givewp.com/contact), we'd love to chat with you about that.
 
@@ -159,9 +167,9 @@ Here’s a few ways you can contribute to GiveWP:
 
 = Minimum Requirements =
 
-* WordPress 4.9 or greater
-* PHP version 5.6 or greater
-* MySQL version 5.6 or greater
+* WordPress 5.0 or greater
+* PHP version 7.0 or greater
+* MySQL version 5.7 or greater
 * MariaDB version 10 or later
 * Some payment gateways require fsockopen support (for IPN access)
 * cURL version 5.40 or higher
@@ -250,6 +258,217 @@ The 2% fee on Stripe donations only applies to donations taken via our free Stri
 8. GiveWP has a dedicated support team to help answer any questions you may have and help you through stumbling blocks.
 
 == Changelog ==
+= 2.27.0: April 27th, 2023 =
+* Feature: Added a nice new view to the list tables when there are no donations, donors, or subscriptions
+* Enhancement: Donation comments are now stored as meta to improve performance
+* Enhancement: Simplifications to the new Gateway API to make gateways easier to build
+* Enhancement: Added a simple way for gateways, in the Gateway API, to pass extra data back to the server
+* Enhancement: Improvements on our end that help make sure that GiveWP is compatbible with PHP 7.0-8.0
+* Enhancement: List table bulk actions are now extensible, used by the new Bulk Export feature in the PDF Receipts add-on
+* Fix: The give_subscription_inserted hook is now fired when a subscription is created in the new Gateway API
+* Fix: Added a polyfill (backwards compatibility) for the MBString PHP extension for PHP 7.0-7.2
+* Fix: The form grid now consistently uses the excerpt for the form description
+* Fix: Prevented a crash when searching for a subscription by its identifier on the gateway
+* Fix: Resolved an incompatibility with WooCommerce that threw an error on on the License page
+* Fix: Resolved an incompatibility with Beaver Builder that prevented the Donor Wall shortcode from working
+
+= 2.26.0: April 6th, 2023 =
+* Enhancement: Minor updates for improved WordPress 6.2 compatibility
+* Enhancement: A number of under the hood improvements in preparation for the upcoming Visual Donation Form Builder feature plugin release
+* Enhancement: Improvements to recurring donations in the Gateway API
+* Enhancement: Implemented our new GiveWP design system to improve designs across our website and prdocuts
+* Fix: Conditionals fields based on the amount field work again
+* Fix: Files with a text mime type now work when uploading files for import
+* Fix: If an error occurs in the Donor Dashboard when canceling a subscription, that subscription is no longer marked as canceled
+
+= 2.25.3: March 22nd, 2023 =
+* Security: Protect against CSRF during donation import
+
+= 2.25.2: March 8th, 2023 =
+* Security: Protect against CSRF during give cache clear settings
+* Security: Protect against CSV injection in donation export settings
+* Security: Protect against XSS and CSRF in donation import settings
+* Security: Protect against XSS in give_form_grid shortcode
+* Security: Protect against CSRF and Arbitrary Content Deletion in admin list tables
+* Security: Protect against SSRF in add-on changelog requests
+
+= 2.25.1: March 1st, 2023 =
+* Enhancement: Compatibility in the Donor Dashboard with the new Square recurring support
+* Enhancement: Exported donations are ordered by ID by default
+* Fix: Sites without the ctype PHP extension no longer run into problems
+* Fix: Prevent a handful of PHP 8.1 deprecation notices
+* Fix: Fixed a PHP 8.0 error in receipt templates
+
+= 2.25.0: February 21st, 2023 =
+* Feature: Donors now explicitly state whether they are donating as a company, useful for things like Gift Aid
+* Enhancement: Improvements to the Gateway API in preparation for GiveWP 3.0
+* Enhancement: Optimizations to how we interact with the GiveWP Gateway server
+* Enhancement: New method for storing donation notes using the Donation model
+* Fix: Improved how PayPal Donation tokens are handled to prevent the need to reconnect one's PayPal account
+* Fix: Classic forms using Authorize.Net as the default gateway now work as expected
+* Fix: Square credit card fields now work properly on safari
+* Fix: Resolved escaping issue preventing modal from displaying on some sites
+* Fix: The "Download Receipt" link in the PDF is more reliable after making donation updates
+* Fix: Prevented a filter from running twice on the donation summary
+* Fix: Styling looks better for modals in the Classic template
+* Fix: Corrected some styling in the Multi-Step and Classic template receipts that affected the Tributes add-on
+
+= 2.24.2: February 1st, 2023 =
+* Enhancement: Reorganized the GiveWP admin menu items to a cleaner, more intuitive order.
+* Fix: Servers without the PHP Intl extension broke the admin list tables. This is a fixed and a new Currency setting was introduced to [control automatic formatting](https://docs.givewp.com/currency-format).
+
+= 2.24.1: January 19th, 2023 =
+* Security: Further protection against SQL Injection attacks.
+* Fix: Forms with missing level data no longer breaks the whole form list table.
+
+= 2.24.0: January 18th, 2023 =
+* Security: Fixed critical and a low level security vulnerabilities. See our [critical release notice](https://go.givewp.com/2-24) for more details.
+* New: Sorting and custom columns are now supported for the Form, Donor, and Donation admin list tables
+* New: Subscription admin list table has a new, modern look like the other list tables — requires GiveWP Recurring add-on
+* Enhancement: New Validation framework in preparation for GiveWP 3.0
+* Enhancement: Donor Dashboard is ready for the upcoming Authorize.Net recurring support
+* Enhancement: Further small improvements to get ready for the upcoming GiveWP Next Gen Feature Plugin
+* Fix: Donor errors correctly display when using the Multi-Step form template
+* Fix: Donor comments now show up when the Stripe or PayPal Donations gateways are used
+* Fix: Accessibility improvement for generating a new user API key
+* Fix: The payment amount in the donation summary correctly updates when the donor enters a custom amount
+
+= 2.23.2: November 17th, 2022 =
+* Enhancement: Added support for gateways that need to mark a new subscription as processing
+* Fix: Fixed a Stripe issue in conjunction with Stripe that would throw an error when processing a renewal
+* Fix: Prevent some PHP notices when being used on PHP 8
+
+= 2.23.1: October 31st, 2022 =
+* Fix: Fee Recovered amount in the donation summary works better with currencies that use a comma as the thousands separator
+* Fix: Form Grid donate button color defaults to black to avoid being invisible in some cases
+* Fix: Made text translatable in the Form Grid that previously wasn't
+* Fix: The give()->donations->getLatestDonation now correctly grabs the most recent
+* Fix: Zip code and country are now in the correct order for donor exports
+* Fix: The Donor and Donation models correctly handle missing meta
+
+= 2.23.0: October 20th, 2022 =
+* Enhancement: Under the hood improvements to how recurrence is handled in donations and subscriptions
+* Enhancement: Added additional filters to email settings (for Peer-to-Peer)
+* Fix: Wrapped up some issues to make sure GiveWP is ready for WordPress 6.1
+* Fix: Scrolling a form on a mobile device will no longer select a amount level
+* Fix: Errors now display properly (and are auto-scrolled to) in the Classic template
+
+= 2.22.3: October 13th, 2022 =
+* Fix: When a donor creates an account the email is assured to be sent the right account
+
+= 2.22.2: September, 28th 2022 =
+* Fix: The give_goal and give_form shortcodes once again display correctly with the goal progress
+* Fix: Translating in Google Chrome no longer prevents disconnecting the PayPal account
+
+= 2.22.1: September, 20th 2022 =
+* Security: Updated a number of 3rd party packages we use to include security fixes
+* Fix: Legacy template now displays the correct amount for the donor and donation goals
+* Fix: Donor Dashboard block is now selectable within the Block Editor
+* Fix: A fatal error is now prevented when other plugins or themes use the_title filter
+* Fix: Fund and revenue totals now properly reflect the amount when a donation is edited
+* Fix: The progress bar displays/hides correctly when the show_goal property for give_form_grid is used
+
+= 2.22.0: August 18th, 2022 =
+* Feature: SendWP integration to easily connect emails to their service
+* Enhancement: Improvement to the GatewayAPI to allow gateways to pass custom data to the server
+* Fix: Prevent the MAX_JOIN_SIZE error from breaking queries that affected some folks
+* Fix: Goal percentage on the Multi-Step form has been fixed to accurately reflect amount raised
+* Fix: When filling out the deactivation survey, deactivation will no longer be prevented if our server is down
+* Fix: Added more escaping to secure against vulnerabilities
+
+= 2.21.4: July 8th, 2022 =
+* Fix: The CSRF patch for the stats exporter was breaking other exporters. The patch is still in place but the other exporters are working again.
+
+= 2.21.3: July 7th, 2022 =
+* Security: Protect against CSRF and DOS attacks against the donation stats exporter
+* Security: Protect against XSS attacks for the currency endpoint
+* Fix: Styling corrections for the donation, donor, and form admin lists
+* Fix: Selecting a specific donation when previewing an email no longer throws an error
+* Fix: Renewal reminder emails are once again being sent
+* Fix: Prevent a 400 error from occurring in Stripe webhooks
+* Fix: Anonymous donations are working properly again for subscriptions
+
+= 2.21.2: June 29th, 2022 =
+* Feature: Exporting donors now supports limiting by their donation date — useful for getting donors who gave in the last year
+* Enhancement: the new Gateway API now supports recurring under the hood
+* Enhancement: donors are now passed to the give_donors_column_query_data hook (thanks Genevieve!)
+* Security: Updated some internal dependencies that had security fixes
+* Security: Better protection against invalid dates when exporting donation statistics
+* Security: Prevent overreach hack when using the exporters
+* Fix: For some folks a really old migration got stuck, and now it's unstuck
+* Fix: Summary Heading for the classic Form field displays as it should
+* Fix: The "Display Header" setting for Classic Form shows/hides the corresponding settings
+* Fix: Made the default Form Grid colors a bit nicer
+* Fix: Some of our greens weren't the right GiveWP green. All greens have been made right
+* Fix: Cleaned up some PHP warnings in the Donor Wall caused by other add-ons
+* Fix: Put the donation date back in on the Donor Wall
+* Fix: Donation links weren't working on sub-directory WordPress installs on the Donation List table, now they do
+* Fix: Required fields on the Multi-Step form now have an asterisk to help communicate to the donor
+* Fix: Resolved a styling conflict introduce by the updated Form Grid on the Goal shortcode and Legacy template
+* Fix: Improved some grammar and wording in our PayPal instructions
+* Fix: Updated the PayPal logo to their latest and greatest
+* Fix: Improved translations on the Donor Wall
+* Fix: Updated the currency symbol for LKR (thanks pxydigital!)
+* Fix: Donations made with 0-decimals now display properly on the Donor Wall
+* Fix: Form goal settings are better reflected on the Form Grid
+
+= 2.21.1: June 21st, 2022 =
+* Fix: Resolved a "sort buffer" error on MySQL 5.7 and older
+* Fix: Added and corrected some missing translations
+
+= 2.21.0: June 16th, 2022 =
+* New: Fresh new look for the Donor Wall block and shortcode!
+* New: Form Grid looks has a great new look and more visual options!
+* Enhancement: The new Gateway API now uses he new Models
+* Enhancement: All failed queries are now logged with extra data to troubleshoot
+* Enhancement: Some minor visual improvements on the Logs admin page
+* Security: Remove an unused donor wall endpoint that made donor wall data too easy to access
+* Security: Donors can no longer immediately access the Donor Dashboard without authentication
+* Security: Further tightening of XSS protection per WordPress security guidelines
+* Security: Tighten up file exposure to GiveWP Managers in the Exporter
+* Fix: Prevent a notice and database error on fresh installs
+* Fix: Cleared up some notices that logging was causing
+* Fix: Admin notices no longer scrunch all weird-like up at the top of the page
+* Fix: Further compatibility fixes for PHP 8.1
+* Fix: Text aligns better for offline donations in the form
+* Fix: Stripe gracefully ignores events that come in from another platform
+* Fix: Brought back accidentally removed income goal stat filters. Thanks sc0ttkclark!
+* Fix: Make sure that all donation errors are caught and gracefully handled to inform the donor
+* Fix: Renewals now display the correct payment type in the admin donations list
+* Fix: Checkboxes (also created via Form Field Manager) no longer require being checked when conditionally hidden
+
+= 2.20.2: June 8th, 2022 =
+* Security: Donors are no longer able to view the Donor Dashboard for the email they donated in without logging in
+* Security: Added additional URL escaping around the codebase to protect against XSS attacks
+* Fix: Subscriptions can now be changed again by donors using the legacy subscriptions shortcode
+
+= 2.20.1: May 19th, 2022 =
+* Fix: Corrected an issue where admin notices were displaying strangely
+* Fix: Removed the "Switch to New View" button that would show up in strange admin places when switched to the legacy donor or donation lists
+
+= 2.20.0: May 11th, 2022 =
+* New: Refreshed the donor and donation list screens in the admin
+* New: Significant improvements to the donor wall and form grid blocks
+* Enhancement: Optimized deleting a donation and all of its meta
+* Enhancement: Many under-the-hood improvements Gateway API
+* Enhancement: Updated Romanian currency symbol to RON
+* Enhancement: Logging system has built-in checks to redact sensitive information
+* Fix: Resolved a 3D Secure issue with PayPal Donations
+* Fix: Tags now work properly in the Offline Donations content
+* Fix: Improved error handling if an error occurs with PayPal Donations
+* Fix: Viewing a receipt in the legacy donation history page now works
+* Fix: Prevent a "donation_decimals" notice when adding and updating forms
+* Fix: Percentage goals display properly on the form list
+* Fix: The correct donation form title is shown on the Stripe checkout page
+* Fix: Donor Wall can no longer be accessed outside of the website
+* Fix: Equal operator for conditional fields works again (also affects Form Field Manager)
+* Fix: Improved Multi-Step content to provide a default and avoid confusion
+* Fix: Clicking the main "Donations" menu item goes to the forms list instead of making a new form
+* Fix: Corrected PayPal Donations design when used in Classic template
+
+= 2.19.8: April 6th, 2022 =
+* Fix: Corrected an issue with our javascript translations
+
 = 2.19.7: April 4th, 2022 =
 * Fix: Resolved a regression in 2.19.6 that broke the Stripe Checkout gateway — please update immediately
 

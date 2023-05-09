@@ -2,10 +2,9 @@
 /tmp
 /tests/bin/tmp
 
-# Cypress
-/cypress
-/tests/e2e/videos
-/tests/e2e/screenshots
+# Bin files
+/bin/*
+!/bin/.gitkeep
 
 # Numerous always-ignore extensions
 .diff

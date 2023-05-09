@@ -1919,7 +1919,7 @@ class Give_API {
 						?>
 						<?php if ( empty( $user->give_user_public_key ) ) { ?>
 							<input name="give_set_api_key" type="checkbox" id="give_set_api_key" />
-							<span class="description"><?php _e( 'Generate API Key', 'give' ); ?></span>
+							<span class="description"><label for="give_set_api_key"><?php _e( 'Generate API Key', 'give' ); ?></label></span>
 						<?php } else { ?>
 							<strong style="display:inline-block; width: 125px;"><?php _e( 'Public key:', 'give' ); ?>
 								&nbsp;</strong>
@@ -2012,23 +2012,23 @@ class Give_API {
 			case 'generate':
 				if ( $this->generate_api_key( $user_id ) ) {
 					Give_Cache::delete( Give_Cache::get_key( 'give_total_api_keys' ) );
-					wp_redirect( add_query_arg( 'give-messages[]', 'api-key-generated', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) );
+					wp_redirect( esc_url_raw( add_query_arg( 'give-messages[]', 'api-key-generated', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) ) );
 					exit();
 				} else {
-					wp_redirect( add_query_arg( 'give-messages[]', 'api-key-failed', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) );
+					wp_redirect( esc_url_raw( add_query_arg( 'give-messages[]', 'api-key-failed', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) ) );
 					exit();
 				}
 				break;
 			case 'regenerate':
 				$this->generate_api_key( $user_id, true );
 				Give_Cache::delete( Give_Cache::get_key( 'give_total_api_keys' ) );
-				wp_redirect( add_query_arg( 'give-messages[]', 'api-key-regenerated', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) );
+				wp_redirect( esc_url_raw( add_query_arg( 'give-messages[]', 'api-key-regenerated', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) ) );
 				exit();
 				break;
 			case 'revoke':
 				$this->revoke_api_key( $user_id );
 				Give_Cache::delete( Give_Cache::get_key( 'give_total_api_keys' ) );
-				wp_redirect( add_query_arg( 'give-messages[]', 'api-key-revoked', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) );
+				wp_redirect( esc_url_raw( add_query_arg( 'give-messages[]', 'api-key-revoked', 'edit.php?post_type=give_forms&page=give-tools&tab=api' ) ) );
 				exit();
 				break;
 			default;

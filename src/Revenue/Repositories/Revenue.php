@@ -2,17 +2,19 @@
 
 namespace Give\Revenue\Repositories;
 
+use Give\Donations\Models\Donation;
 use Give\Framework\Database\DB;
-use Give\Framework\Database\Exceptions\DatabaseQueryException;
 use Give\Framework\Exceptions\Primitives\InvalidArgumentException;
+use Give\Framework\Support\ValueObjects\Money;
 
 /**
  * Class Revenue
- * @package Give\Revenue\Repositories
+ * @package    Give\Revenue\Repositories
  *
  * Use this class to get data from "give_revenue" table.
  *
- * @since 2.9.0
+ * @since      2.9.0
+ * @since 2.22.1 Added the `updateRevenueAmount()` method
  */
 class Revenue
 {
@@ -52,28 +54,36 @@ class Revenue
      * @param $revenueId
      *
      * @return false|int
-     * @throws DatabaseQueryException
      */
     public function deleteByDonationId($revenueId)
     {
         global $wpdb;
 
-        try {
-            return DB::delete(
-                $wpdb->give_revenue,
-                ['donation_id' => $revenueId],
-                ['%d']
-            );
-        } catch (DatabaseQueryException $exception) {
-            give_record_log(
-                'Revenue delete by donation failed',
-                $exception->getLogOutput(),
-                0,
-                'database'
-            );
+        return DB::delete(
+            $wpdb->give_revenue,
+            ['donation_id' => $revenueId],
+            ['%d']
+        );
+    }
 
-            throw $exception;
-        }
+    /**
+     * @since 2.22.1
+     *
+     * @param Donation $donation
+     *
+     * @return false|int
+     */
+    public function updateRevenueAmount(Donation $donation)
+    {
+        global $wpdb;
+
+        return DB::update(
+            $wpdb->give_revenue,
+            ['amount' => $donation->amount->formatToMinorAmount()],
+            ['donation_id' => $donation->id],
+            ['%d'],
+            ['%d']
+        );
     }
 
     /**
@@ -96,7 +106,7 @@ class Revenue
             unset($array['form_id']);
         }
 
-        if ( ! is_numeric($array['amount']) || (int)$array['amount'] < 0) {
+        if (!is_numeric($array['amount']) || (int)$array['amount'] < 0) {
             unset($array['amount']);
         }
 

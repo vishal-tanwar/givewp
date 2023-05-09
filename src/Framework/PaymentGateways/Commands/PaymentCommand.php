@@ -22,41 +22,49 @@ abstract class PaymentCommand implements GatewayCommand
     public $paymentNotes = [];
 
     /**
-     * @param  string|null  $gatewayTransactionId
+     * @param string|null $gatewayTransactionId
+     *
      * @return static
      */
-    public static function make($gatewayTransactionId = null)
+    public static function make(string $gatewayTransactionId = null): PaymentCommand
     {
         return new static($gatewayTransactionId);
     }
 
     /**
-     * @since 2.18.0
+     * @since      2.18.0
+     * @since 2.23.1 Make constructor final to avoid unsafe usage of `new static()`.
      *
-     * @param  string|null  $gatewayTransactionId
+     * @param string|null $gatewayTransactionId
      */
-    public function __construct($gatewayTransactionId = null)
+    final public function __construct(string $gatewayTransactionId = null)
     {
         $this->gatewayTransactionId = $gatewayTransactionId;
     }
 
     /**
-     * @param  string|string[]  ...$paymentNotes
+     * @since 2.22.0 add type, so it is typesafe
+     *
+     * @param string|string[] ...$paymentNotes
+     *
      * @return $this
      */
-    public function setPaymentNotes(...$paymentNotes)
+    public function setPaymentNotes(string ...$paymentNotes): PaymentCommand
     {
         $this->paymentNotes = $paymentNotes;
+
         return $this;
     }
 
     /**
-     * @param  string  $gatewayTransactionId
+     * @param string $gatewayTransactionId
+     *
      * @return $this
      */
-    public function setTransactionId($gatewayTransactionId)
+    public function setTransactionId(string $gatewayTransactionId): PaymentCommand
     {
         $this->gatewayTransactionId = $gatewayTransactionId;
+
         return $this;
     }
 }

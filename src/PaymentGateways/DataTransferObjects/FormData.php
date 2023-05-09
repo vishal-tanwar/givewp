@@ -6,6 +6,7 @@ use Exception;
 use Give\Donations\Models\Donation;
 use Give\Donations\Properties\BillingAddress;
 use Give\Donations\ValueObjects\DonationStatus;
+use Give\Framework\Support\ValueObjects\Money;
 use Give\ValueObjects\Address;
 use Give\ValueObjects\CardInfo;
 use Give\ValueObjects\DonorInfo;
@@ -14,7 +15,7 @@ use Give\ValueObjects\DonorInfo;
  * Class FormData
  * @since 2.18.0
  */
-class FormData
+final class FormData
 {
     /**
      * @var float
@@ -100,27 +101,24 @@ class FormData
      * @var DonorInfo
      */
     public $donorInfo;
+
+    /** @var bool */
+    public $anonymous;
     /**
-     * This property is only for internal use. It will be removed in the future.
-     * We will use this property to gracefully deprecate action and filter which exist in existing donation flow.
-     *
-     * @deprecated
-     * @var array
+     * @var string|null
      */
-    public $legacyDonationData;
+    public $company;
 
     /**
      * Convert data from request into DTO
      *
+     * @since 2.22.0 add support for company field
      * @since 2.18.0
-     *
-     * @return self
      */
-    public static function fromRequest(array $request)
+    public static function fromRequest(array $request): FormData
     {
         $self = new static();
 
-        $self->legacyDonationData = $request;
         $self->price = $request['price'];
         $self->date = $request['date'];
         $self->purchaseKey = $request['purchase_key'];
@@ -129,7 +127,7 @@ class FormData
         $self->postData = $request['post_data'];
         $self->formTitle = $request['post_data']['give-form-title'];
         $self->formId = (int)$request['post_data']['give-form-id'];
-        $self->priceId = isset($request['post_data']['give-price-id']) ? $request['post_data']['give-price-id'] : '';
+        $self->priceId = $request['post_data']['give-price-id'] ?? '';
         $self->formIdPrefix = $request['post_data']['give-form-id-prefix'];
         $self->currentUrl = $request['post_data']['give-current-url'];
         $self->formMinimum = $request['post_data']['give-form-minimum'];
@@ -144,7 +142,7 @@ class FormData
             'lastName' => $request['user_info']['last_name'],
             'email' => $request['user_info']['email'],
             'honorific' => ! empty($request['user_info']['title']) ? $request['user_info']['title'] : '',
-            'address' => $request['user_info']['address']
+            'address' => $request['user_info']['address'],
         ]);
         $self->cardInfo = CardInfo::fromArray([
             'name' => $request['card_info']['card_name'],
@@ -162,22 +160,26 @@ class FormData
             'postalCode' => $request['card_info']['card_zip'],
         ]);
 
+        $self->anonymous = isset($request['post_data']['give_anonymous_donation']) && (bool)absint(
+                $request['post_data']['give_anonymous_donation']
+            );
+
+        $self->company = !empty($request['post_data']['give_company_name']) ? $request['post_data']['give_company_name'] : null;
+
         return $self;
     }
 
     /**
+     * @since 2.22.0 add support for company field
      * @since 2.19.6
-     *
-     * @return Donation
      * @throws Exception
      */
-    public function toDonation($donorId)
+    public function toDonation($donorId): Donation
     {
-        return new Donation([
+        $donation = new Donation([
             'status' => DonationStatus::PENDING(),
-            'gateway' => $this->paymentGateway,
-            'amount' => (int)$this->price,
-            'currency' => $this->currency,
+            'gatewayId' => $this->paymentGateway,
+            'amount' => Money::fromDecimal($this->price, $this->currency),
             'donorId' => $donorId,
             'firstName' => $this->donorInfo->firstName,
             'lastName' => $this->donorInfo->lastName,
@@ -190,52 +192,23 @@ class FormData
                 'state' => $this->billingAddress->state,
                 'zip' => $this->billingAddress->postalCode,
                 'address1' => $this->billingAddress->line1,
-                'address2' => $this->billingAddress->line2
+                'address2' => $this->billingAddress->line2,
             ]),
-            'levelId' => (int)$this->priceId
+            'levelId' => $this->priceId,
+            'anonymous' => $this->anonymous,
+            'company' => $this->company
         ]);
-    }
 
-    /**
-     *
-     * @return GiveInsertPaymentData
-     */
-    public function toGiveInsertPaymentData()
-    {
-        return GiveInsertPaymentData::fromArray([
-            'price' => $this->price,
-            'formTitle' => $this->formTitle,
-            'formId' => $this->formId,
-            'priceId' => $this->priceId,
-            'date' => $this->date,
-            'donorEmail' => $this->donorInfo->email,
-            'purchaseKey' => $this->purchaseKey,
-            'currency' => $this->currency,
-            'userInfo' => $this->userInfo,
-            'paymentGateway' => $this->paymentGateway
-        ]);
-    }
+        /**
+         * Since 2018, we have been updating the donor's company field based on their donation.
+         * The company in donation meta never changes, but the company in donor meta gets updated based on the most recent donation in which that donor supplied a company.
+         *
+         * @see https://github.com/impress-org/givewp/issues/2453#issuecomment-373103211
+         */
+        if ($donation->company) {
+            give()->donor_meta->update_meta($donorId, '_give_donor_company', $donation->company);
+        }
 
-    /**
-     * @param int $donationId
-     *
-     * @return GatewayPaymentData
-     */
-    public function toGatewayPaymentData($donationId)
-    {
-        return GatewayPaymentData::fromArray([
-            'legacyPaymentData' => $this->legacyDonationData,
-            'amount' => $this->amount,
-            'currency' => $this->currency,
-            'date' => $this->date,
-            'price' => $this->price,
-            'priceId' => $this->priceId,
-            'gatewayId' => $this->paymentGateway,
-            'donationId' => $donationId,
-            'purchaseKey' => $this->purchaseKey,
-            'donorInfo' => $this->donorInfo,
-            'cardInfo' => $this->cardInfo,
-            'billingAddress' => $this->billingAddress,
-        ]);
+        return $donation;
     }
 }

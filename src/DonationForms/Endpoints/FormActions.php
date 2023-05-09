@@ -2,6 +2,7 @@
 
 namespace Give\DonationForms\Endpoints;
 
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -25,7 +26,7 @@ class FormActions extends Endpoint
             $this->endpoint,
             [
                 [
-                    'methods'             => ['GET', 'POST', 'DELETE'],
+                    'methods'             => ['POST', 'UPDATE', 'DELETE'],
                     'callback'            => [$this, 'handleRequest'],
                     'permission_callback' => [$this, 'permissionsCheck'],
                 ],
@@ -37,7 +38,8 @@ class FormActions extends Endpoint
                             'trash',
                             'restore',
                             'delete',
-                            'duplicate'
+                            'duplicate',
+                            'edit',
                         ],
                     ],
                     'ids'    => [
@@ -52,14 +54,42 @@ class FormActions extends Endpoint
 
                             return true;
                         },
-                    ]
+                    ],
+                    'author' => [
+                        'type' => 'string',
+                        'required' => 'false',
+                    ],
+                    'status' => [
+                        'type' => 'string',
+                        'required' => 'false',
+                    ],
                 ],
             ]
         );
     }
 
     /**
-     * @param  WP_REST_Request  $request
+     * @since 2.25.2
+     *
+     * @inheritDoc
+     */
+    public function permissionsCheck()
+    {
+        if ( ! current_user_can('edit_give_forms')) {
+            return new WP_Error(
+                'rest_forbidden',
+                esc_html__('You don\'t have permission to edit Donation Forms', 'give'),
+                ['status' => $this->authorizationStatusCode()]
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * @since      2.19.0
+     *
+     * @param WP_REST_Request $request
      *
      * @return WP_REST_Response
      */
@@ -74,7 +104,7 @@ class FormActions extends Endpoint
             case 'trash':
                 foreach ($ids as $id) {
                     $form = wp_trash_post($id);
-                    $form ? $successes[] = $form : $errors[] = $form;
+                    !empty($form) ? $successes[] = $id : $errors[] = $id;
                 }
 
                 break;
@@ -82,7 +112,7 @@ class FormActions extends Endpoint
             case 'restore':
                 foreach ($ids as $id) {
                     $form = wp_untrash_post($id);
-                    $form ? $successes[] = $form : $errors[] = $form;
+                    !empty($form) ? $successes[] = $id : $errors[] = $id;
                 }
 
                 break;
@@ -92,7 +122,7 @@ class FormActions extends Endpoint
                 foreach ($ids as $id) {
                     $form = wp_delete_post($id);
                     give()->form_meta->delete_all_meta($id);
-                    $form ? $successes[] = $form : $errors[] = $form;
+                    !empty($form) ? $successes[] = $form : $errors[] = $form;
                 }
 
                 break;
@@ -105,6 +135,18 @@ class FormActions extends Endpoint
                     $form ? $successes[] = $form : $errors[] = $form;
                 }
 
+                break;
+
+            case 'edit':
+                $author = $request->get_param('author');
+                $status = $request->get_param('status');
+                $update_args = [];
+                $author ? $update_args['post_author'] = $author : null;
+                $status ? $update_args['post_status'] = $status : null;
+                foreach ($ids as $id) {
+                    $form = wp_update_post(array_merge($update_args, ['ID' => $id]));
+                    !empty($form) ? $successes[] = $id : $errors[] = $id;
+                }
                 break;
         }
 

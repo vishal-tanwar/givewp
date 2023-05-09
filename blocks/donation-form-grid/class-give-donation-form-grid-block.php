@@ -92,12 +92,16 @@ class Give_Donation_Form_Grid_Block {
 						'default' => '12',
 					),
 					'formIDs'           => array(
-						'type'    => 'string',
-						'default' => '',
+						'type'    => 'array',
+						'default' => [],
 					),
-					'excludedFormIDs'   => array(
-						'type'    => 'string',
-						'default' => '',
+					'excludeForms'   => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+                    'excludedFormIDs'   => array(
+						'type'    => 'array',
+						'default' => [],
 					),
 					'orderBy'           => array(
 						'type'    => 'string',
@@ -108,16 +112,16 @@ class Give_Donation_Form_Grid_Block {
 						'default' => 'DESC',
 					),
 					'categories'        => array(
-						'type'    => 'string',
-						'default' => '',
+						'type'    => 'array',
+						'default' => [],
 					),
 					'tags'              => array(
-						'type'    => 'string',
-						'default' => '',
+						'type'    => 'array',
+						'default' => [],
 					),
 					'columns'           => array(
 						'type'    => 'string',
-						'default' => 'best-fit',
+						'default' => '1',
 					),
                     'imageSize'           => array(
 						'type'    => 'string',
@@ -143,21 +147,29 @@ class Give_Donation_Form_Grid_Block {
 						'type'    => 'boolean',
 						'default' => true,
 					),
+                    'showProgressBar'          => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
 					'showFeaturedImage' => array(
 						'type'    => 'boolean',
 						'default' => true,
 					),
                     'showDonateButton' => array(
 						'type'    => 'boolean',
-						'default' => false,
+						'default' => true,
 					),
-                    'donateButtonBackgroundColor' => array(
+                    'tagBackgroundColor' => array(
 						'type'    => 'string',
-						'default' => '#66bb6a',
+						'default' => '#69b86b',
 					),
+                    'tagTextColor' => array(
+                        'type'    => 'string',
+                        'default' => '#ffffff',
+                    ),
                     'donateButtonTextColor' => array(
                         'type'    => 'string',
-                        'default' => '#fff',
+                        'default' => '#69b86b',
                     ),
 					'displayType'       => array(
 						'type'    => 'string',
@@ -167,6 +179,18 @@ class Give_Donation_Form_Grid_Block {
                         'type'    => 'boolean',
                         'default' => true,
                     ),
+                    'filterOptions'       => array(
+                        'type'    => 'string',
+                        'default' => 'tags',
+                    ),
+                    'imageHeightOptions'       => array(
+                        'type'    => 'string',
+                        'default' => 'auto',
+                    ),
+                    'progressBarColor'  => array(
+                        'type' => 'string',
+                        'default' => '#69b86b'
+                    )
 				),
 			)
 		);
@@ -183,12 +207,12 @@ class Give_Donation_Form_Grid_Block {
 	public function render_block( $attributes ) {
 		$parameters = array(
 			'forms_per_page'      => absint( $attributes['formsPerPage'] ),
-			'ids'                 => $attributes['formIDs'],
-			'exclude'             => $attributes['excludedFormIDs'],
+			'ids'                 => implode(',', $this->getAsArray($attributes['formIDs'] ) ),
+			'exclude'             => implode(',', $this->getAsArray($attributes['excludedFormIDs'] ) ),
 			'orderby'             => $attributes['orderBy'],
 			'order'               => $attributes['order'],
-			'cats'                => $attributes['categories'],
-			'tags'                => $attributes['tags'],
+			'cats'                => implode(',', $this->getAsArray($attributes['categories'] ) ),
+			'tags'                => implode(',', $this->getAsArray($attributes['tags'] ) ),
 			'columns'             => $attributes['columns'],
 			'show_title'          => $attributes['showTitle'],
 			'show_goal'           => $attributes['showGoal'],
@@ -196,19 +220,41 @@ class Give_Donation_Form_Grid_Block {
             'excerpt_length'      => $attributes['excerptLength'],
 			'show_featured_image' => $attributes['showFeaturedImage'],
 			'show_donate_button'  => $attributes['showDonateButton'],
-			'donate_button_background_color' => $attributes['donateButtonBackgroundColor'],
-			'donate_button_text_color' => $attributes['donateButtonTextColor'],
+			'tag_background_color' => $attributes['tagBackgroundColor'],
+            'tag_text_color' => $attributes['tagTextColor'],
+            'donate_button_text_color' => $attributes['donateButtonTextColor'],
 			'display_style'       => $attributes['displayType'],
             'paged'               => $attributes['paged'],
             'image_size'          => $attributes['imageSize'],
             'image_height'        => $attributes['imageHeight'],
-		);
+            'image_height_options' => $attributes['imageHeightOptions'],
+            'progress_bar_color'  => $attributes['progressBarColor']
+        );
 
 		$html = give_form_grid_shortcode( $parameters );
 		$html = ! empty( $html ) ? $html : $this->blank_slate();
 
 		return $html;
 	}
+
+    /**
+     * @since 2.25.0
+     *
+     * @param string|array $value
+     * @return array
+     */
+    private function getAsArray($value) {
+        if ( is_array($value) ) {
+            return $value;
+        }
+
+        // Backward compatibility
+        if (strpos($value, ',')) {
+            return explode(',', $value);
+        }
+
+        return [$value];
+    }
 
 	/**
 	 * Return formatted notice when shortcode return empty string

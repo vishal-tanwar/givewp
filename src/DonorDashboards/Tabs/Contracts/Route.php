@@ -2,8 +2,11 @@
 
 namespace Give\DonorDashboards\Tabs\Contracts;
 
+use Exception;
 use Give\API\RestRoute;
+use Give\DonorDashboards\Helpers as DonorDashboardHelpers;
 use Give\Log\Log;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -12,7 +15,6 @@ use WP_REST_Response;
  */
 abstract class Route implements RestRoute
 {
-
     /**
      * Returns string to complete Route endpoint
      * Full route will be donor-profile/{endpoint}
@@ -61,7 +63,7 @@ abstract class Route implements RestRoute
                     'methods' => 'POST',
                     'callback' => [$this, 'handleRequestWithDonorIdCheck'],
                     'permission_callback' => function () {
-                        return is_user_logged_in() || Give()->session->get_session_expiration() !== false;
+                        return DonorDashboardHelpers::isDonorLoggedIn();
                     },
                 ],
                 'args' => $this->args(),
@@ -69,10 +71,13 @@ abstract class Route implements RestRoute
         );
     }
 
+    /**
+     * @since 2.26.0 add try/catch to handleRequest
+     */
     public function handleRequestWithDonorIdCheck(WP_REST_Request $request)
     {
         // Check that the provided donor ID is valid
-        if ( ! Give()->donors->get_donor_by('id', give()->donorDashboard->getId())) {
+        if (!Give()->donors->get_donor_by('id', give()->donorDashboard->getId())) {
             Log::error(
                 esc_html__('An error occurred while validating donor ID on request.', 'give'),
                 [
@@ -82,7 +87,7 @@ abstract class Route implements RestRoute
                     'Email Access Token' => give()->email_access->token_email,
                     'Session Email' => give()->session->get('give_email'),
                     'Session Expiration' => give()->session->get_session_expiration(),
-                    'Error' => __('Donor ID coud not be validated for request.', 'give'),
+                    'Error' => __('Donor ID could not be validated for request.', 'give'),
                 ]
             );
 
@@ -102,6 +107,14 @@ abstract class Route implements RestRoute
             );
         }
 
-        return $this->handleRequest($request);
+        try {
+            $response = $this->handleRequest($request);
+
+            return rest_ensure_response($response ?? []);
+        } catch (Exception $exception) {
+            $error = new WP_Error('error', $exception->getMessage());
+
+            return rest_ensure_response($error);
+        }
     }
 }

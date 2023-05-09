@@ -4,7 +4,9 @@ namespace Give\Subscriptions\DataTransferObjects;
 
 use DateTime;
 use Give\Framework\Support\Facades\DateTime\Temporal;
+use Give\Framework\Support\ValueObjects\Money;
 use Give\Subscriptions\Models\Subscription;
+use Give\Subscriptions\ValueObjects\SubscriptionMode;
 use Give\Subscriptions\ValueObjects\SubscriptionPeriod;
 use Give\Subscriptions\ValueObjects\SubscriptionStatus;
 
@@ -13,7 +15,7 @@ use Give\Subscriptions\ValueObjects\SubscriptionStatus;
  *
  * @since 2.19.6
  */
-class SubscriptionQueryData
+final class SubscriptionQueryData
 {
     /**
      * @var int
@@ -26,7 +28,7 @@ class SubscriptionQueryData
     /**
      * @var DateTime
      */
-    public $expiresAt;
+    public $renewsAt;
     /**
      * @var string
      */
@@ -52,13 +54,21 @@ class SubscriptionQueryData
      */
     public $transactionId;
     /**
-     * @var int
+     * @var SubscriptionMode
+     */
+    public $mode;
+    /**
+     * @var Money
      */
     public $amount;
     /**
-     * @var int
+     * @var Money
      */
-    public $feeAmount;
+    public $feeAmountRecovered;
+    /**
+     * @var string
+     */
+    public $gatewayId;
     /**
      * @var string
      */
@@ -72,26 +82,27 @@ class SubscriptionQueryData
      * Convert data from Subscription Object to Subscription Model
      *
      * @since 2.19.6
-     *
-     * @return self
      */
-    public static function fromObject($subscriptionQueryObject)
+    public static function fromObject($subscriptionQueryObject): self
     {
         $self = new static();
 
         $self->id = (int)$subscriptionQueryObject->id;
         $self->createdAt = Temporal::toDateTime($subscriptionQueryObject->createdAt);
-        $self->expiresAt = isset($subscriptionQueryObject->expiration) ? Temporal::toDateTime(
-            $subscriptionQueryObject->expiration
+        $self->renewsAt = isset($subscriptionQueryObject->renewsAt) ? Temporal::toDateTime(
+            $subscriptionQueryObject->renewsAt
         ) : null;
         $self->donorId = (int)$subscriptionQueryObject->donorId;
         $self->period = new SubscriptionPeriod($subscriptionQueryObject->period);
         $self->frequency = (int)$subscriptionQueryObject->frequency;
         $self->installments = (int)$subscriptionQueryObject->installments;
         $self->transactionId = $subscriptionQueryObject->transactionId;
-        $self->amount = (int)$subscriptionQueryObject->amount;
-        $self->feeAmount = (int)$subscriptionQueryObject->feeAmount;
+        $self->mode = new SubscriptionMode($subscriptionQueryObject->mode);
+        $self->amount = Money::fromDecimal($subscriptionQueryObject->amount, $subscriptionQueryObject->currency ?? give_get_currency());
+        $self->feeAmountRecovered = Money::fromDecimal($subscriptionQueryObject->feeAmount,
+            $subscriptionQueryObject->currency ?? give_get_currency());
         $self->status = new SubscriptionStatus($subscriptionQueryObject->status);
+        $self->gatewayId = $subscriptionQueryObject->gatewayId;
         $self->gatewaySubscriptionId = $subscriptionQueryObject->gatewaySubscriptionId;
         $self->donationFormId = (int)$subscriptionQueryObject->donationFormId;
 
@@ -100,10 +111,8 @@ class SubscriptionQueryData
 
     /**
      * Convert DTO to Subscription
-     *
-     * @return Subscription
      */
-    public function toSubscription()
+    public function toSubscription(): Subscription
     {
         $attributes = get_object_vars($this);
 

@@ -10,6 +10,9 @@ use Give_Subscription;
 class DispatchGiveRecurringAddSubscriptionPaymentAndRecordPayment
 {
     /**
+     * This function triggers legacy subscription renewal donation action hooks.
+     *
+     * @since 2.23.0 remove use of Donation::parentId
      * @since 2.19.6
      *
      * @param  Donation  $donation
@@ -19,10 +22,10 @@ class DispatchGiveRecurringAddSubscriptionPaymentAndRecordPayment
     {
         $subscription = new Give_Subscription($donation->subscriptionId);
         $payment = new Give_Payment($donation->id);
-        $parent = new Give_Payment($donation->parentId);
+        $parent = new Give_Payment(give()->subscriptions->getInitialDonationId($donation->subscriptionId));
 
         $payment->parent_payment = $subscription->parent_payment_id;
-        $payment->total = $donation->amount;
+        $payment->total = (float) $donation->amount->formatToDecimal();
         $payment->form_title = $donation->formTitle;
         $payment->form_id = $donation->formId;
         $payment->customer_id = $donation->donorId;
@@ -44,7 +47,7 @@ class DispatchGiveRecurringAddSubscriptionPaymentAndRecordPayment
             'give_recurring_record_payment',
             $payment,
             $subscription->parent_payment_id,
-            $donation->amount,
+            $payment->total,
             $donation->gatewayTransactionId
         );
     }

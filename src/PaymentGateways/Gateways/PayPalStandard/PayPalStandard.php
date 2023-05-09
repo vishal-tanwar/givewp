@@ -2,11 +2,12 @@
 
 namespace Give\PaymentGateways\Gateways\PayPalStandard;
 
+use Give\Donations\Models\Donation;
+use Give\Framework\Exceptions\Primitives\Exception;
 use Give\Framework\Http\Response\Types\RedirectResponse;
 use Give\Framework\PaymentGateways\Commands\RedirectOffsite;
 use Give\Framework\PaymentGateways\PaymentGateway;
 use Give\Helpers\Call;
-use Give\PaymentGateways\DataTransferObjects\GatewayPaymentData;
 use Give\PaymentGateways\Gateways\PayPalStandard\Actions\CreatePayPalStandardPaymentURL;
 use Give\PaymentGateways\Gateways\PayPalStandard\Actions\GenerateDonationFailedPageUrl;
 use Give\PaymentGateways\Gateways\PayPalStandard\Actions\GenerateDonationReceiptPageUrl;
@@ -14,21 +15,24 @@ use Give\PaymentGateways\Gateways\PayPalStandard\Controllers\PayPalStandardWebho
 use Give\PaymentGateways\Gateways\PayPalStandard\Views\PayPalStandardBillingFields;
 use Give_Payment;
 
+/**
+ * @since 2.19.0
+ */
 class PayPalStandard extends PaymentGateway
 {
     public $routeMethods = [
-        'handleIpnNotification'
+        'handleIpnNotification',
     ];
 
     public $secureRouteMethods = [
         'handleSuccessPaymentReturn',
-        'handleFailedPaymentReturn'
+        'handleFailedPaymentReturn',
     ];
 
     /**
      * @inheritDoc
      */
-    public function getLegacyFormFieldMarkup($formId, $args)
+    public function getLegacyFormFieldMarkup(int $formId, array $args): string
     {
         return Call::invoke(PayPalStandardBillingFields::class, $formId);
     }
@@ -36,7 +40,7 @@ class PayPalStandard extends PaymentGateway
     /**
      * @inheritDoc
      */
-    public static function id()
+    public static function id(): string
     {
         return 'paypal';
     }
@@ -44,7 +48,7 @@ class PayPalStandard extends PaymentGateway
     /**
      * @inerhitDoc
      */
-    public function getId()
+    public function getId(): string
     {
         return self::id();
     }
@@ -52,7 +56,7 @@ class PayPalStandard extends PaymentGateway
     /**
      * @inheritDoc
      */
-    public function getName()
+    public function getName(): string
     {
         return esc_html__('PayPal Standard', 'give');
     }
@@ -60,7 +64,7 @@ class PayPalStandard extends PaymentGateway
     /**
      * @inheritDoc
      */
-    public function getPaymentMethodLabel()
+    public function getPaymentMethodLabel(): string
     {
         return esc_html__('PayPal', 'give');
     }
@@ -68,21 +72,21 @@ class PayPalStandard extends PaymentGateway
     /**
      * @inheritDoc
      */
-    public function createPayment(GatewayPaymentData $paymentData)
+    public function createPayment(Donation $donation, $gatewayData = []): RedirectOffsite
     {
         return new RedirectOffsite(
             Call::invoke(
                 CreatePayPalStandardPaymentURL::class,
-                $paymentData,
+                $donation,
                 $this->generateSecureGatewayRouteUrl(
                     'handleSuccessPaymentReturn',
-                    $paymentData->donationId,
-                    ['donation-id' => $paymentData->donationId]
+                    $donation->id,
+                    ['donation-id' => $donation->id]
                 ),
                 $this->generateSecureGatewayRouteUrl(
                     'handleFailedPaymentReturn',
-                    $paymentData->donationId,
-                    ['donation-id' => $paymentData->donationId]
+                    $donation->id,
+                    ['donation-id' => $donation->id]
                 ),
                 $this->generateGatewayRouteUrl(
                     'handleIpnNotification'
@@ -99,22 +103,24 @@ class PayPalStandard extends PaymentGateway
      * @since 2.19.6 1. Do not set donation to "processing"
      *             2. Add "payment-confirmation" param to receipt page url
      *
-     * @param  array  $queryParams  Query params in gateway route. {
+     * @param array $queryParams Query params in gateway route. {
      *
      * @type string "donation-id" Donation id.
      *
      * }
-     *
-     * @return RedirectResponse
      */
-    public function handleSuccessPaymentReturn($queryParams)
+    protected function handleSuccessPaymentReturn(array $queryParams): RedirectResponse
     {
         $donationId = (int)$queryParams['donation-id'];
 
-        return new RedirectResponse(add_query_arg(
-            [ 'payment-confirmation' => $this->getId() ],
-            Call::invoke(GenerateDonationReceiptPageUrl::class, $donationId)
-        ));
+        return new RedirectResponse(
+            esc_url_raw(
+                add_query_arg(
+                    ['payment-confirmation' => self::id()],
+                    Call::invoke(GenerateDonationReceiptPageUrl::class, $donationId)
+                )
+            )
+        );
     }
 
     /**
@@ -127,10 +133,8 @@ class PayPalStandard extends PaymentGateway
      * @type string "donation-id" Donation id.
      *
      * }
-     *
-     * @return RedirectResponse
      */
-    public function handleFailedPaymentReturn($queryParams)
+    protected function handleFailedPaymentReturn(array $queryParams): RedirectResponse
     {
         $donationId = (int)$queryParams['donation-id'];
         $payment = new Give_Payment($donationId);
@@ -239,5 +243,15 @@ class PayPalStandard extends PaymentGateway
          * @since 2.9.6
          */
         return apply_filters('give_get_settings_paypal_standard', $setting);
+    }
+
+    /**
+     * @since 2.20.0
+     * @inerhitDoc
+     * @throws Exception
+     */
+    public function refundDonation(Donation $donation)
+    {
+        throw new Exception('Method has not been implemented yet. Please use the legacy method in the meantime.');
     }
 }

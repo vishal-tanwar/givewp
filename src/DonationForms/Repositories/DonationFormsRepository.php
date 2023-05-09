@@ -2,122 +2,54 @@
 
 namespace Give\DonationForms\Repositories;
 
-use Give\Framework\Database\DB;
-use WP_REST_Request;
+use Give\DonationForms\Models\DonationForm;
+use Give\DonationForms\ValueObjects\DonationFormMetaKeys;
+use Give\Donations\Models\Donation;
+use Give\Framework\Models\ModelQueryBuilder;
 
 /**
+ * @since 2.24.0 add support methods for donation form model
  * @since 2.19.0
  */
 class DonationFormsRepository
 {
     /**
-     * @param  WP_REST_Request  $request
+     * Get DonationForm By ID
      *
-     * @return array
+     * @since 2.24.0
+     *
+     * @return DonationForm|null
      */
-    public function getFormsForRequest(WP_REST_Request $request)
+    public function getById(int $donationFormId)
     {
-        $page    = $request->get_param('page');
-        $perPage = $request->get_param('perPage');
-        $search  = $request->get_param('search');
-        $status  = $request->get_param('status');
-
-        $query = DB::table('posts')
-                   ->select(
-                       ['ID', 'id'],
-                       ['post_date', 'createdAt'],
-                       ['post_date_gmt', 'createdAtGmt'],
-                       ['post_status', 'status'],
-                       ['post_title', 'title']
-                   )
-                   ->attachMeta('give_formmeta', 'id', 'form_id',
-                       ['_give_form_earnings', 'revenue'],
-                       ['_give_donation_levels', 'donationLevels'],
-                       ['_give_set_price', 'setPrice'],
-                       ['_give_goal_option', 'goalEnabled']
-                   )
-                   ->where('post_type', 'give_forms')
-                   ->limit($perPage)
-                   ->orderBy('id', 'DESC')
-                   ->offset(($page - 1) * $perPage);
-
-        // Status
-        if ($status === 'any') {
-            $query->whereIn('post_status', ['publish', 'draft', 'pending']);
-        } else {
-            $query->where('post_status', $status);
-        }
-
-        // Search
-        if ($search) {
-            if (ctype_digit($search)) {
-                $query->where('ID', $search);
-            } else {
-                $searchTerms = array_map('trim', explode(' ', $search));
-                foreach ($searchTerms as $term)
-                {
-                    if ($term)
-                    {
-                        $query->whereLike('post_title', $term);
-                    }
-                }
-            }
-        }
-
-        return $query->getAll();
+        return $this->prepareQuery()
+            ->where('ID', $donationFormId)
+            ->get();
     }
 
     /**
-     * @param  WP_REST_Request  $request
+     * @since 2.24.0
      *
-     * @return int
+     * @return ModelQueryBuilder<Donation>
      */
-    public function getTotalFormsCountForRequest(WP_REST_Request $request)
+    public function prepareQuery(): ModelQueryBuilder
     {
-        $search  = $request->get_param('search');
-        $status  = $request->get_param('status');
-        $perPage = $request->get_param('perPage');
+        $builder = new ModelQueryBuilder(DonationForm::class);
 
-        $query = DB::table('posts')
-                   ->selectRaw('SELECT COUNT(ID) AS count')
-                   ->where('post_type', 'give_forms');
-
-        if ($status === 'any') {
-            $query->whereIn('post_status', ['publish', 'draft', 'pending']);
-        } else {
-            $query->where('post_status', $status);
-        }
-
-        if ($search) {
-            if (ctype_digit($search)) {
-                $query->where('ID', $search);
-            } else {
-                $query->whereLike('post_title', $search);
-            }
-        }
-
-        $query->limit($perPage);
-
-        $total = $query->get();
-
-        return $total->count;
-    }
-
-    /**
-     * @param  int  $formId
-     *
-     * @return int
-     */
-    public function getFormDonationsCount($formId)
-    {
-        $donations = DB::table('posts')
-                       ->selectRaw('SELECT COUNT(ID) as count')
-                       ->leftJoin('give_donationmeta', 'ID', 'donation_id')
-                       ->where('meta_key', '_give_payment_form_id')
-                       ->where('meta_value', $formId)
-                       ->get();
-
-
-        return $donations->count;
+        return $builder->from('posts')
+            ->select(
+                ['ID', 'id'],
+                ['post_title', 'title'],
+                ['post_date', 'createdAt'],
+                ['post_modified', 'updatedAt'],
+                ['post_status', 'status']
+            )
+            ->attachMeta(
+                'give_formmeta',
+                'ID',
+                'form_id',
+                ...DonationFormMetaKeys::getColumnsForAttachMetaQuery()
+            )
+            ->where('post_type', 'give_forms');
     }
 }

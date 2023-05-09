@@ -2,12 +2,13 @@
 
 namespace Give\Donations\Repositories;
 
-use Exception;
 use Give\Donations\Actions\GeneratePurchaseKey;
 use Give\Donations\Models\Donation;
 use Give\Donations\ValueObjects\DonationMetaKeys;
 use Give\Donations\ValueObjects\DonationMode;
+use Give\Donations\ValueObjects\DonationStatus;
 use Give\Framework\Database\DB;
+use Give\Framework\Exceptions\Primitives\Exception;
 use Give\Framework\Exceptions\Primitives\InvalidArgumentException;
 use Give\Framework\Models\ModelQueryBuilder;
 use Give\Framework\QueryBuilder\QueryBuilder;
@@ -15,13 +16,25 @@ use Give\Framework\Support\Facades\DateTime\Temporal;
 use Give\Helpers\Call;
 use Give\Helpers\Hooks;
 use Give\Log\Log;
-use Give\ValueObjects\Money;
 
 /**
+ * @since 2.20.0 update amount type, fee recovered, and exchange rate
  * @since 2.19.6
  */
 class DonationRepository
 {
+    /**
+     * @var DonationNotesRepository
+     */
+    public $notes;
+
+    /**
+     * @since 2.21.0
+     */
+    public function __construct()
+    {
+        $this->notes = give(DonationNotesRepository::class);
+    }
 
     /**
      * @since 2.19.6
@@ -31,11 +44,11 @@ class DonationRepository
     private $requiredDonationProperties = [
         'formId',
         'status',
-        'gateway',
+        'gatewayId',
         'amount',
-        'currency',
         'donorId',
         'firstName',
+        'type',
         'email',
     ];
 
@@ -44,11 +57,9 @@ class DonationRepository
      *
      * @since 2.19.6
      *
-     * @param  int  $donationId
-     *
      * @return Donation|null
      */
-    public function getById($donationId)
+    public function getById(int $donationId)
     {
         return $this->prepareQuery()
             ->where('ID', $donationId)
@@ -56,13 +67,48 @@ class DonationRepository
     }
 
     /**
+     * @since 2.21.0
+     * @return Donation|null
+     */
+    public function getByGatewayTransactionId($gatewayTransactionId)
+    {
+        return $this->queryByGatewayTransactionId($gatewayTransactionId)->get();
+    }
+
+    /**
+     * @since 2.21.0
+     */
+    public function queryByGatewayTransactionId($gatewayTransactionId): ModelQueryBuilder
+    {
+        return $this->prepareQuery()
+            ->where('post_type', 'give_payment')
+            ->where('ID', function (QueryBuilder $builder) use ($gatewayTransactionId) {
+                $builder
+                    ->select('donation_id')
+                    ->from('give_donationmeta')
+                    ->where('meta_key', DonationMetaKeys::GATEWAY_TRANSACTION_ID()->getValue())
+                    ->where('meta_value', $gatewayTransactionId);
+            });
+    }
+
+    /**
      * @since 2.19.6
      *
-     * @param  int  $subscriptionId
+     * @param  int  $donationId
+     * @return ModelQueryBuilder<Donation>
+     */
+    public function queryById(int $donationId): ModelQueryBuilder
+    {
+        return $this->prepareQuery()
+            ->where('ID', $donationId);
+    }
+
+    /**
+     * @since 2.19.6
      *
      * @return Donation[]|null
      */
-    public function getBySubscriptionId($subscriptionId)
+    public function getBySubscriptionId(int $subscriptionId)
     {
         return $this->queryBySubscriptionId($subscriptionId)->getAll();
     }
@@ -71,10 +117,9 @@ class DonationRepository
      * @since 2.19.6
      *
      * @param  int  $subscriptionId
-     *
-     * @return ModelQueryBuilder
+     * @return ModelQueryBuilder<Donation>
      */
-    public function queryBySubscriptionId($subscriptionId)
+    public function queryBySubscriptionId(int $subscriptionId): ModelQueryBuilder
     {
         $initialDonationId = give()->subscriptions->getInitialDonationId($subscriptionId);
 
@@ -96,10 +141,9 @@ class DonationRepository
      * @since 2.19.6
      *
      * @param  int  $donorId
-     *
-     * @return ModelQueryBuilder
+     * @return ModelQueryBuilder<Donation>
      */
-    public function queryByDonorId($donorId)
+    public function queryByDonorId(int $donorId): ModelQueryBuilder
     {
         return $this->prepareQuery()
             ->where('post_type', 'give_payment')
@@ -114,41 +158,44 @@ class DonationRepository
     }
 
     /**
+     * @since 2.23.0 retrieve the post_parent instead of relying on parentId property
+     * @since 2.21.0 replace actions with givewp_donation_creating and givewp_donation_created
+     * @since 2.20.0 mutate model and return void
      * @since 2.19.6
      *
-     * @param  Donation  $donation
-     *
-     * @return Donation
+     * @return void
      * @throws Exception|InvalidArgumentException
      */
     public function insert(Donation $donation)
     {
         $this->validateDonation($donation);
 
-        Hooks::doAction('give_donation_creating', $donation);
+        Hooks::doAction('givewp_donation_creating', $donation);
 
-        $date = $donation->createdAt ? Temporal::getFormattedDateTime(
-            $donation->createdAt
-        ) : Temporal::getCurrentFormattedDateForDatabase();
-
+        $dateCreated = Temporal::withoutMicroseconds($donation->createdAt ?: Temporal::getCurrentDateTime());
+        $dateCreatedFormatted = Temporal::getFormattedDateTime($dateCreated);
+        $dateUpdated = $donation->updatedAt ?? $dateCreated;
+        $dateUpdatedFormatted = Temporal::getFormattedDateTime($dateUpdated);
 
         DB::query('START TRANSACTION');
 
         try {
             DB::table('posts')
                 ->insert([
-                    'post_date' => $date,
-                    'post_date_gmt' => get_gmt_from_date($date),
-                    'post_modified' => $date,
-                    'post_modified_gmt' => get_gmt_from_date($date),
-                    'post_status' => $donation->status->getValue(),
+                    'post_date' => $dateCreatedFormatted,
+                    'post_date_gmt' => get_gmt_from_date($dateCreatedFormatted),
+                    'post_modified' => $dateUpdatedFormatted,
+                    'post_modified_gmt' => get_gmt_from_date($dateUpdatedFormatted),
+                    'post_status' => $this->getPersistedDonationStatus($donation)->getValue(),
                     'post_type' => 'give_payment',
-                    'post_parent' => isset($donation->parentId) ? $donation->parentId : 0
+                    'post_parent' => $this->deriveLegacyDonationParentId($donation),
                 ]);
 
             $donationId = DB::last_insert_id();
 
-            foreach ($this->getCoreDonationMetaForDatabase($donation) as $metaKey => $metaValue) {
+            $donationMeta = $this->getCoreDonationMetaForDatabase($donation);
+
+            foreach ($donationMeta as $metaKey => $metaValue) {
                 DB::table('give_donationmeta')
                     ->insert([
                         'donation_id' => $donationId,
@@ -166,28 +213,40 @@ class DonationRepository
 
         DB::query('COMMIT');
 
-        $donation = $this->getById($donationId);
+        $donation->id = $donationId;
 
-        Hooks::doAction('give_donation_created', $donation);
+        $donation->createdAt = $dateCreated;
+        $donation->updatedAt = $dateUpdated;
 
-        return $donation;
+        if (!isset($donation->formTitle)) {
+            $donation->formTitle = $this->getFormTitle($donation->formId);
+        }
+
+        if (!isset($donation->purchaseKey)) {
+            $donation->purchaseKey = $donationMeta[DonationMetaKeys::PURCHASE_KEY];
+        }
+
+        Hooks::doAction('givewp_donation_created', $donation);
     }
 
     /**
+     * @since 2.23.1 Use give_update_meta() method to update entries on give_donationmeta table
+     * @since 2.23.0 retrieve the post_parent instead of relying on parentId property
+     * @since 2.21.0 replace actions with givewp_donation_updating and givewp_donation_updated
+     * @since 2.20.0 return void
      * @since 2.19.6
      *
-     * @param  Donation  $donation
-     *
-     * @return Donation
+     * @return void
      * @throws Exception|InvalidArgumentException
      */
     public function update(Donation $donation)
     {
         $this->validateDonation($donation);
 
-        Hooks::doAction('give_donation_updating', $donation);
+        Hooks::doAction('givewp_donation_updating', $donation);
 
-        $date = Temporal::getCurrentFormattedDateForDatabase();
+        $now = Temporal::withoutMicroseconds(Temporal::getCurrentDateTime());
+        $nowFormatted = Temporal::getFormattedDateTime($now);
 
         DB::query('START TRANSACTION');
 
@@ -195,20 +254,15 @@ class DonationRepository
             DB::table('posts')
                 ->where('ID', $donation->id)
                 ->update([
-                    'post_modified' => $date,
-                    'post_modified_gmt' => get_gmt_from_date($date),
-                    'post_status' => $donation->status->getValue(),
+                    'post_modified' => $nowFormatted,
+                    'post_modified_gmt' => get_gmt_from_date($nowFormatted),
+                    'post_status' => $this->getPersistedDonationStatus($donation)->getValue(),
                     'post_type' => 'give_payment',
-                    'post_parent' => isset($donation->parentId) ? $donation->parentId : 0
+                    'post_parent' => $this->deriveLegacyDonationParentId($donation),
                 ]);
 
             foreach ($this->getCoreDonationMetaForDatabase($donation) as $metaKey => $metaValue) {
-                DB::table('give_donationmeta')
-                    ->where('donation_id', $donation->id)
-                    ->where('meta_key', $metaKey)
-                    ->update([
-                        'meta_value' => $metaValue,
-                    ]);
+                give()->payment_meta->update_meta($donation->id, $metaKey, $metaValue);
             }
         } catch (Exception $exception) {
             DB::query('ROLLBACK');
@@ -218,37 +272,34 @@ class DonationRepository
             throw new $exception('Failed updating a donation');
         }
 
+        $donation->updatedAt = $now;
+
         DB::query('COMMIT');
 
-        Hooks::doAction('give_donation_updated', $donation);
-
-        return $donation;
+        Hooks::doAction('givewp_donation_updated', $donation);
     }
 
     /**
+     * @since 2.21.0 replace actions with givewp_donation_deleting and givewp_donation_deleted
+     * @since 2.20.0 consolidate meta deletion into a single query
      * @since 2.19.6
      *
-     * @param  Donation  $donation
-     * @return bool
      * @throws Exception
      */
-    public function delete(Donation $donation)
+    public function delete(Donation $donation): bool
     {
         DB::query('START TRANSACTION');
 
-        Hooks::doAction('give_donation_deleting', $donation);
+        Hooks::doAction('givewp_donation_deleting', $donation);
 
         try {
             DB::table('posts')
                 ->where('id', $donation->id)
                 ->delete();
 
-            foreach ($this->getCoreDonationMetaForDatabase($donation) as $metaKey => $metaValue) {
-                DB::table('give_donationmeta')
-                    ->where('donation_id', $donation->id)
-                    ->where('meta_key', $metaKey)
-                    ->delete();
-            }
+            DB::table('give_donationmeta')
+                ->where('donation_id', $donation->id)
+                ->delete();
         } catch (Exception $exception) {
             DB::query('ROLLBACK');
 
@@ -259,44 +310,49 @@ class DonationRepository
 
         DB::query('COMMIT');
 
-        Hooks::doAction('give_donation_deleted', $donation);
+        Hooks::doAction('givewp_donation_deleted', $donation);
 
         return true;
     }
 
     /**
+     * @since 2.20.0 update amount to use new type, and add currency and exchange rate
      * @since 2.19.6
-     *
-     * @param  Donation  $donation
-     *
-     * @return array
      */
-    private function getCoreDonationMetaForDatabase(Donation $donation)
+    private function getCoreDonationMetaForDatabase(Donation $donation): array
     {
         $meta = [
-            DonationMetaKeys::AMOUNT => Money::of($donation->amount, $donation->currency)->getAmount(),
-            DonationMetaKeys::CURRENCY => $donation->currency,
-            DonationMetaKeys::GATEWAY => $donation->gateway,
+            DonationMetaKeys::GATEWAY_TRANSACTION_ID => $donation->gatewayTransactionId,
+            DonationMetaKeys::AMOUNT => give_sanitize_amount_for_db(
+                $donation->amount->formatToDecimal(),
+                ['currency' => $donation->amount->getCurrency()]
+            ),
+            DonationMetaKeys::CURRENCY => $donation->amount->getCurrency()->getCode(),
+            DonationMetaKeys::EXCHANGE_RATE => $donation->exchangeRate,
+            DonationMetaKeys::GATEWAY => $donation->gatewayId,
             DonationMetaKeys::DONOR_ID => $donation->donorId,
             DonationMetaKeys::FIRST_NAME => $donation->firstName,
             DonationMetaKeys::LAST_NAME => $donation->lastName,
             DonationMetaKeys::EMAIL => $donation->email,
             DonationMetaKeys::FORM_ID => $donation->formId,
-            DonationMetaKeys::FORM_TITLE => isset($donation->formTitle) ? $donation->formTitle : $this->getFormTitle(
-                $donation->formId
-            ),
-            DonationMetaKeys::MODE => isset($donation->mode) ? $donation->mode->getValue(
-            ) : $this->getDefaultDonationMode()->getValue(),
-            DonationMetaKeys::PURCHASE_KEY => isset($donation->purchaseKey)
-                ? $donation->purchaseKey
-                : Call::invoke(
+            DonationMetaKeys::FORM_TITLE => $donation->formTitle ?? $this->getFormTitle($donation->formId),
+            DonationMetaKeys::MODE => isset($donation->mode) ?
+                $donation->mode->getValue() :
+                $this->getDefaultDonationMode()->getValue(),
+            DonationMetaKeys::PURCHASE_KEY => $donation->purchaseKey ?? Call::invoke(
                     GeneratePurchaseKey::class,
                     $donation->email
                 ),
-            DonationMetaKeys::DONOR_IP => isset($donation->donorIp) ? $donation->donorIp : give_get_ip(),
+            DonationMetaKeys::DONOR_IP => $donation->donorIp ?? give_get_ip(),
+            DonationMetaKeys::LEVEL_ID => $donation->levelId,
+            DonationMetaKeys::ANONYMOUS => (int)$donation->anonymous
         ];
 
-        if (isset($donation->billingAddress)) {
+        if ($donation->feeAmountRecovered !== null) {
+            $meta[DonationMetaKeys::FEE_AMOUNT_RECOVERED] = $donation->feeAmountRecovered->formatToDecimal();
+        }
+
+        if ($donation->billingAddress !== null) {
             $meta[DonationMetaKeys::BILLING_COUNTRY] = $donation->billingAddress->country;
             $meta[DonationMetaKeys::BILLING_ADDRESS2] = $donation->billingAddress->address2;
             $meta[DonationMetaKeys::BILLING_CITY] = $donation->billingAddress->city;
@@ -309,69 +365,28 @@ class DonationRepository
             $meta[DonationMetaKeys::SUBSCRIPTION_ID] = $donation->subscriptionId;
         }
 
-        if (isset($donation->anonymous)) {
-            $meta[DonationMetaKeys::ANONYMOUS] = $donation->anonymous;
+        if ($donation->type->isSubscription()) {
+            $meta[DonationMetaKeys::SUBSCRIPTION_INITIAL_DONATION] = 1;
+            $meta[DonationMetaKeys::IS_RECURRING] = 1;
         }
 
-        if (isset($donation->levelId)) {
-            $meta[DonationMetaKeys::LEVEL_ID] = $donation->levelId;
+        if ($donation->company !== null) {
+            $meta[DonationMetaKeys::COMPANY] = $donation->company;
+        }
+
+        if ($donation->comment !== null) {
+            $meta[DonationMetaKeys::COMMENT] = $donation->comment;
         }
 
         return $meta;
     }
 
     /**
-     * In Legacy terms, the Initial Donation acts as the parent ID for subscription renewals.
-     * This function inserts those specific meta columns that accompany this concept.
-     *
      * @since 2.19.6
-     *
-     * @throws Exception
-     */
-    public function updateLegacyDonationMetaAsInitialSubscriptionDonation($donationId)
-    {
-        DB::query('START TRANSACTION');
-
-        try {
-            DB::table('give_donationmeta')
-                ->insert(
-                    [
-                        'donation_id' => $donationId,
-                        'meta_key' => '_give_subscription_payment',
-                        'meta_value' => true,
-                    ]
-                );
-
-            DB::table('give_donationmeta')
-                ->insert(
-                    [
-                        'donation_id' => $donationId,
-                        'meta_key' => '_give_is_donation_recurring',
-                        'meta_value' => true,
-                    ]
-                );
-        } catch (Exception $exception) {
-            DB::query('ROLLBACK');
-
-            Log::error('Failed updating a donation as initial legacy subscription donation', compact('donationId'));
-
-            throw new $exception('Failed updating a donation as initial legacy subscription donation');
-        }
-
-        DB::query('COMMIT');
-
-        return true;
-    }
-
-    /**
-     *
-     * @since 2.19.6
-     *
-     * @param  int  $donationId
      *
      * @return int|null
      */
-    public function getSequentialId($donationId)
+    public function getSequentialId(int $donationId)
     {
         $query = DB::table('give_sequential_ordering')->where('payment_id', $donationId)->get();
 
@@ -385,33 +400,6 @@ class DonationRepository
     /**
      * @since 2.19.6
      *
-     * @param  int  $id
-     *
-     * @return object[]
-     */
-    public function getNotesByDonationId($id)
-    {
-        $notes = DB::table('give_comments')
-            ->select(
-                ['comment_content', 'note'],
-                ['comment_date', 'date']
-            )
-            ->where('comment_parent', $id)
-            ->where('comment_type', 'donation')
-            ->orderBy('comment_date', 'DESC')
-            ->getAll();
-
-        if (!$notes) {
-            return [];
-        }
-
-        return $notes;
-    }
-
-    /**
-     * @since 2.19.6
-     *
-     * @param  Donation  $donation
      * @return void
      */
     private function validateDonation(Donation $donation)
@@ -422,17 +410,40 @@ class DonationRepository
             }
         }
 
+        if ( $donation->subscriptionId && $donation->type->isSingle()) {
+            throw new InvalidArgumentException('Subscription ID can only be set for recurring donations.');
+        }
+
+        if ( !$donation->subscriptionId && ( $donation->type->isRenewal() || $donation->type->isSubscription() ) ) {
+            throw new InvalidArgumentException('Subscription ID is required for recurring donations.');
+        }
+
         if (!$donation->donor) {
             throw new InvalidArgumentException("Invalid donorId, Donor does not exist");
         }
     }
 
     /**
-     * @since 2.19.6
+     * Provides the donation status with consideration for the donation type. If a donation is a renewal type and its
+     * status is "complete", then the status will return "renewal". In the future, "renewal" will no longer be a valid
+     * status, at which point this function will be unnecessary.
      *
-     * @return DonationMode
+     * New renewal donations moving forward should set the type as "renewal" and the status as "complete".
+     *
+     * @since 2.23.0
      */
-    private function getDefaultDonationMode()
+    private function getPersistedDonationStatus(Donation $donation): DonationStatus {
+        if ( $donation->status->isComplete() && $donation->type->isRenewal() ) {
+            return DonationStatus::RENEWAL();
+        }
+
+        return $donation->status;
+    }
+
+    /**
+     * @since 2.19.6
+     */
+    private function getDefaultDonationMode(): DonationMode
     {
         $mode = give_is_test_mode() ? 'test' : 'live';
 
@@ -440,12 +451,20 @@ class DonationRepository
     }
 
     /**
-     * @since 2.19.6
+     * We're moving away from using the parent_id column for donations, but we still need to support it for now as
+     * legacy code still relies on it. It is only stored and should never be used in the model.
      *
-     * @param  int  $formId
-     * @return string
+     * @since 2.23.0
      */
-    public function getFormTitle($formId)
+    private function deriveLegacyDonationParentId(Donation $donation): int
+    {
+        return $donation->type->isRenewal() ? give()->subscriptions->getInitialDonationId($donation->subscriptionId) : 0;
+    }
+
+    /**
+     * @since 2.19.6
+     */
+    public function getFormTitle(int $formId): string
     {
         $form = DB::table('posts')
             ->where('id', $formId)
@@ -459,9 +478,11 @@ class DonationRepository
     }
 
     /**
+     * @since 2.23.0 no longer retrieve the post_parent from the database as parentId is deprecated
+     *
      * @return ModelQueryBuilder<Donation>
      */
-    public function prepareQuery()
+    public function prepareQuery(): ModelQueryBuilder
     {
         $builder = new ModelQueryBuilder(Donation::class);
 
@@ -470,8 +491,7 @@ class DonationRepository
                 ['ID', 'id'],
                 ['post_date', 'createdAt'],
                 ['post_modified', 'updatedAt'],
-                ['post_status', 'status'],
-                ['post_parent', 'parentId']
+                ['post_status', 'status']
             )
             ->attachMeta(
                 'give_donationmeta',
@@ -484,13 +504,10 @@ class DonationRepository
 
     /**
      * @since 2.19.6
-     *
-     * @param $donorId
-     * @return int
      */
-    public function getTotalDonationCountByDonorId($donorId)
+    public function getTotalDonationCountByDonorId(int $donorId): int
     {
-        return (int)DB::table('posts')
+        return DB::table('posts')
             ->where('post_type', 'give_payment')
             ->whereIn('ID', function (QueryBuilder $builder) use ($donorId) {
                 $builder
@@ -505,10 +522,9 @@ class DonationRepository
     /**
      * @since 2.19.6
      *
-     * @param $donorId
      * @return array|bool|null
      */
-    public function getAllDonationIdsByDonorId($donorId)
+    public function getAllDonationIdsByDonorId(int $donorId)
     {
         return array_column(
             DB::table('give_donationmeta')
@@ -518,5 +534,31 @@ class DonationRepository
                 ->getAll(),
             'donation_id'
         );
+    }
+
+    /**
+     * @since 2.23.1 Fixed order by property, see https://github.com/impress-org/givewp/pull/6559
+     * @since 2.21.2
+     *
+     * @return Donation|null
+     */
+    public function getFirstDonation() {
+        return $this->prepareQuery()
+            ->limit(1)
+            ->orderBy('post_date', 'ASC')
+            ->get();
+    }
+
+    /**
+     * @since 2.23.1 Fixed order by property, see https://github.com/impress-org/givewp/pull/6559
+     * @since 2.21.2
+     *
+     * @return Donation|null
+     */
+    public function getLatestDonation() {
+        return $this->prepareQuery()
+            ->limit(1)
+            ->orderBy('post_date', 'DESC')
+            ->get();
     }
 }

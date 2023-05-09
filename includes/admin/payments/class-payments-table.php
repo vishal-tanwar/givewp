@@ -606,16 +606,18 @@ class Give_Payment_History_Table extends WP_List_Table {
 
 			$actions['email_links'] = sprintf(
 				'<a class="resend-single-donation-receipt" href="%1$s" aria-label="%2$s">%3$s</a>',
-				wp_nonce_url(
-					add_query_arg(
-						[
-							'give-action' => 'email_links',
-							'purchase_id' => $payment->ID,
-						],
-						$this->base_url
-					),
-					'give_payment_nonce'
-				),
+                esc_url(
+                    wp_nonce_url(
+                        add_query_arg(
+                            [
+                                'give-action' => 'email_links',
+                                'purchase_id' => $payment->ID,
+                            ],
+                            $this->base_url
+                        ),
+                        'give_payment_nonce'
+                    )
+                ),
 				sprintf( __( 'Resend Donation %s Receipt', 'give' ), $payment->ID ),
 				__( 'Resend Receipt', 'give' )
 			);
@@ -625,16 +627,18 @@ class Give_Payment_History_Table extends WP_List_Table {
 		if ( current_user_can( 'view_give_payments' ) ) {
 			$actions['delete'] = sprintf(
 				'<a class="delete-single-donation" href="%1$s" aria-label="%2$s">%3$s</a>',
-				wp_nonce_url(
-					add_query_arg(
-						[
-							'give-action' => 'delete_payment',
-							'purchase_id' => $payment->ID,
-						],
-						$this->base_url
-					),
-					'give_donation_nonce'
-				),
+                esc_url(
+                    wp_nonce_url(
+                        add_query_arg(
+                            [
+                                'give-action' => 'delete_payment',
+                                'purchase_id' => $payment->ID,
+                            ],
+                            $this->base_url
+                        ),
+                        'give_donation_nonce'
+                    )
+                ),
 				sprintf( __( 'Delete Donation %s', 'give' ), $payment->ID ),
 				__( 'Delete', 'give' )
 			);
@@ -785,25 +789,32 @@ class Give_Payment_History_Table extends WP_List_Table {
 	/**
 	 * Process the bulk actions
 	 *
-	 * @access public
+     * @since 2.25.2 Add nonce check for bulk action.
 	 * @since  1.0
+     *
+	 * @access public
 	 *
 	 * @return void
 	 */
-	public function process_bulk_action() {
-		$ids    = isset( $_GET['payment'] ) ? $_GET['payment'] : false;
-		$action = $this->current_action();
+	public function process_bulk_action()
+    {
+        $ids = isset($_GET['payment']) ? $_GET['payment'] : false;
+        $action = $this->current_action();
 
-		if ( ! is_array( $ids ) ) {
-			$ids = [ $ids ];
-		}
+        if ( ! is_array($ids)) {
+            $ids = [$ids];
+        }
 
-		if ( empty( $action ) ) {
-			return;
-		}
+        if (
+            empty($action) ||
+            ! current_user_can('edit_give_payments')
+        ) {
+            return;
+        }
 
-		foreach ( $ids as $id ) {
+        give_validate_nonce($_GET['_wpnonce'] ?? '', 'bulk-forms');
 
+        foreach ($ids as $id) {
 			// Detect when a bulk action is being triggered.
 			switch ( $this->current_action() ) {
 

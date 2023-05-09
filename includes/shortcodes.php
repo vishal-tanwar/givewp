@@ -10,12 +10,11 @@
  */
 
 // Exit if accessed directly.
-use Give\Views\IframeView;
-use Give\Helpers\Frontend\Shortcode as ShortcodeUtils;
-use Give\Helpers\Form\Utils as FormUtils;
-use Give\Helpers\Form\Template as FormTemplateUtils;
 use Give\Helpers\Form\Template\Utils\Frontend as FrontendFormTemplateUtils;
+use Give\Helpers\Form\Utils as FormUtils;
 use Give\Helpers\Frontend\ConfirmDonation;
+use Give\Helpers\Frontend\Shortcode as ShortcodeUtils;
+use Give\Views\IframeView;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -72,7 +71,7 @@ function give_donation_history( $atts, $content = false ) {
 		if ( give_get_receipt_session() || is_user_logged_in() ) {
 			echo sprintf(
 				'<a href="%s">%s</a>',
-				esc_url( give_get_history_page_uri() ),
+				esc_url($_SERVER['HTTP_REFERER'] ),
 				__( '&laquo; Return to All Donations', 'give' )
 			);
 		}
@@ -555,9 +554,9 @@ function give_process_profile_editor_updates( $data ) {
 		 * If the password is changed, then logout and redirect to the same page.
 		 */
 		if ( '2' === $update_code || '3' === $update_code ) {
-			wp_logout( wp_redirect( add_query_arg( $profile_edit_redirect_args, $data['give_redirect'] ) ) );
+			wp_logout();
 		} else {
-			wp_redirect( add_query_arg( $profile_edit_redirect_args, $data['give_redirect'] ) );
+			wp_redirect( esc_url_raw( add_query_arg( $profile_edit_redirect_args, $data['give_redirect'] ) ) );
 		}
 
 		give_die();
@@ -789,13 +788,18 @@ add_shortcode( 'give_totals', 'give_totals_shortcode' );
  * @type string $image_size          Featured image size. Default 'medium'. Accepts WordPress image sizes.
  * @type string $image_height        Featured image height. Default 'auto'. Accepts valid CSS heights.
  * @type int    $excerpt_length      Number of words before excerpt is truncated. Default '16'.
- * @type string $display_style       How the form is displayed, either in new page or modal popup.
+ * @type string $display_style How the form is displayed, either in new page or modal popup.
  *                                       Default 'redirect'. Accepts 'redirect', 'modal'.
  *
- * @unreleased string $show_donate_button Option to show donate button
- * @unreleased string $donate_button_text Default Donate
- * @unreleased string $donate_button_background_color Default #66bb6a
- * @unreleased string $donate_button_text_color Default #fff
+ * @since 2.23.1 Updated the default text color for the donate button, see #6591.
+ * @since 2.21.2 change tag_background_color, progress_bar_color to official green color #69b868.
+ *             change tag_text_color color to #333333.
+ * @since 2.20.0 $show_donate_button Option to show donate button
+ * @since 2.20.0 $donate_button_text Default Donate
+ * @since 2.20.0 $donate_button_background_color Default #66bb6a
+ * @since 2.20.0 $donate_button_text_color Default #fff
+ * @since 2.20.0 $show_bar Default false
+ * @since 2.22.2 remove $show_bar attribute in favor of show_goal
  *
  * @return string|bool The markup of the form grid or false.
  */
@@ -813,19 +817,21 @@ function give_form_grid_shortcode( $atts ) {
 			'order'               => 'DESC',
 			'cats'                => '',
 			'tags'                => '',
-			'columns'             => 'best-fit',
+			'columns'             => '1',
 			'show_title'          => true,
 			'show_goal'           => true,
 			'show_excerpt'        => true,
 			'show_featured_image' => true,
-			'show_donate_button'  => false,
+			'show_donate_button'  => true,
 			'donate_button_text'  => '',
-			'donate_button_background_color' => '',
-			'donate_button_text_color' => '',
+			'tag_background_color' => '#69b868',
+            'tag_text_color'      => '#333333',
+            'donate_button_text_color' => '#000000',
 			'image_size'          => 'medium',
 			'image_height'        => 'auto',
 			'excerpt_length'      => 16,
 			'display_style'       => 'modal_reveal',
+            'progress_bar_color' => '#69b868',
 			'status'              => '', // open or closed.
 		],
 		$atts

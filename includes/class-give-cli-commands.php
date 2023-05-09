@@ -779,10 +779,10 @@ class GIVE_CLI_COMMAND {
 
 		$stat_option_names = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} where (option_name LIKE '%%%s%%' OR option_name LIKE '%%%s%%')",
+				"SELECT option_name FROM {$wpdb->options} where (option_name LIKE '%s' OR option_name LIKE '%s')",
 				array(
-					'_transient_give_stats_',
-					'give_cache',
+					'%_transient_give_stats_%',
+					'%give_cache%',
 				)
 			),
 			ARRAY_A
@@ -1178,11 +1178,11 @@ class GIVE_CLI_COMMAND {
 			 * current branch of the addon was updated or not.
 			 */
 			if ( 0 === $return_var ) {
-				WP_CLI::success( sprintf( __( "The GiveWP add-on '%s' is up-to-date with origin." ), $addon_name ) );
+				WP_CLI::success( sprintf( __( "The GiveWP add-on '%s' is up-to-date with origin.", 'give' ), $addon_name ) );
 
 				return;
 			} elseif ( 1 === $return_var ) {
-				WP_CLI::error( sprintf( __( "The GiveWP add-on '%s' was not updated." ), $addon_name ) );
+				WP_CLI::error( sprintf( __( "The GiveWP add-on '%s' was not updated.", 'give' ), $addon_name ) );
 			}
 		}
 

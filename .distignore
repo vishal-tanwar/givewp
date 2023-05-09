@@ -5,14 +5,19 @@
 /.idea
 /.github
 /.storybook
+/.phpstan
+/.wordpress-org
 
+/bin
 /tests
 /node_modules
 /assets/src
+/assets/dist/**/*.map
 /vendor/bin
 /vendor/composer/installers
 /vendor/**/*.phar
 
+.phpstorm.meta.php
 .travis.yml
 .editorconfig
 .babelrc
@@ -31,8 +36,8 @@
 jsconfig.json
 globals.d.ts
 tsconfig.json
+phpstan.neon
 
-cypress.json
 sample-data/wordpress.sql
 sample-data/sample-data.numbers
 bower.json

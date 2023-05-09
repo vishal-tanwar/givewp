@@ -4,12 +4,13 @@ namespace Give\ValueObjects;
 
 /**
  * Class Money
- * @package Give\ValueObjects
  *
- * @since 2.9.0
- * @since 2.11.0 Refactored to make the minor amount the base.
+ * @since      2.9.0
+ * @since      2.11.0 Refactored to make the minor amount the base.
+ * @deprecated @since 2.20.0 Use Give\Framework\Support\ValueObjects\Money in framework instead
+ *
  */
-class Money
+final class Money
 {
     /**
      * The amount in smallest unit of currency.

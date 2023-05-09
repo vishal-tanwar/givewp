@@ -203,7 +203,7 @@ class Donations
     protected function getPaymentInfo($payment)
     {
         $pdfReceiptUrl = '';
-        if (class_exists('Give_PDF_Receipts')) {
+        if (class_exists('Give_PDF_Receipts') && function_exists('give_pdf_receipts')) {
             $pdfReceiptUrl = html_entity_decode(give_pdf_receipts()->engine->get_pdf_receipt_url($payment->ID));
         }
 
@@ -220,14 +220,16 @@ class Donations
             'time' => date_i18n(get_option('time_format'), strtotime($payment->date)),
             'mode' => $payment->get_meta('_give_payment_mode'),
             'pdfReceiptUrl' => $pdfReceiptUrl,
-            'serialCode' => give_is_setting_enabled(give_get_option('sequential-ordering_status', 'disabled')) ? Give(
-            )->seq_donation_number->get_serial_code($payment) : $payment->ID,
+            'serialCode' => give_is_setting_enabled(give_get_option('sequential-ordering_status', 'disabled'))
+                ? Give()->seq_donation_number->get_serial_code($payment)
+                : $payment->ID,
         ];
     }
 
     /**
      * Get array containing dynamic receipt information
      *
+     * @since 2.25.0 replace wp_strip_all_tags with wp_kses_post
      * @since 2.10.0
      *
      * @param Give_Payment $payment
@@ -282,9 +284,9 @@ class Donations
                 }
 
                 $label = html_entity_decode(wp_strip_all_tags($lineItem->label));
-                $value = $lineItem->id === 'paymentStatus' ? $this->getFormattedStatus(
-                    $payment->status
-                ) : html_entity_decode(wp_strip_all_tags($lineItem->value));
+                $value = $lineItem->id === 'paymentStatus'
+                    ? $this->getFormattedStatus($payment->status)
+                    : html_entity_decode(wp_kses_post($lineItem->value));
 
                 $receiptArr[$sectionIndex]['lineItems'][] = [
                     'class' => $detailRowClass,
@@ -328,6 +330,8 @@ class Donations
                 return $icon;
             }
         }
+
+        return 'globe';
     }
 
     /**

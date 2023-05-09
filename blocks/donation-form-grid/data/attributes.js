@@ -12,12 +12,16 @@ const blockAttributes = {
         default: true,
 	},
 	formIDs: {
-		type: 'string',
-		default: '',
+		type: 'array',
+		default: [],
 	},
 	excludedFormIDs:{
-		type: 'string',
-		default: '',
+		type: 'array',
+		default: [],
+	},
+    excludeForms:{
+		type: 'boolean',
+		default: false,
 	},
 	orderBy:{
 		type: 'string',
@@ -28,22 +32,26 @@ const blockAttributes = {
 		default: 'DESC',
 	},
 	categories:{
-		type: 'string',
-		default: '',
+		type: 'array',
+		default: [],
 	},
 	tags:{
-		type: 'string',
-		default: '',
+		type: 'array',
+		default: [],
 	},
 	columns: {
 		type: 'string',
-		default: 'best-fit',
+		default: '1',
 	},
     imageSize: {
         type: 'string',
         default: 'medium',
     },
     imageHeight: {
+        type: 'string',
+        default: 'auto',
+    },
+    imageHeightOptions: {
         type: 'string',
         default: 'auto',
     },
@@ -65,15 +73,19 @@ const blockAttributes = {
 	},
     showDonateButton: {
 		type: 'boolean',
-		default: false,
+		default: true,
 	},
-    donateButtonBackgroundColor: {
+    tagBackgroundColor: {
 		type: 'string',
-		default: '#66bb6a',
+		default: '#69b86b',
 	},
+    tagTextColor: {
+        type: 'string',
+        default: '#ffffff',
+    },
     donateButtonTextColor: {
 		type: 'string',
-		default: '#fff',
+		default: '#69b86b',
 	},
 	displayType: {
 		type: 'string',
@@ -83,6 +95,14 @@ const blockAttributes = {
         type: 'integer',
         default: 16
     },
+    filterOptions: {
+        type: 'string',
+        default: 'tags',
+    },
+    progressBarColor: {
+        type: 'string',
+        default: '#69b86b'
+    }
 };
 
 export default blockAttributes;

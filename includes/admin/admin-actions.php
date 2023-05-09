@@ -42,7 +42,9 @@ add_action( 'wp_ajax_give_load_wp_editor', 'give_load_wp_editor' );
 /**
  * Redirect admin to clean url give admin pages.
  *
- * @since 1.8
+ * @since 2.25.2 Removed _wpnonce from list of removed args.
+ * @since      1.8
+ *
  * @return bool
  */
 function give_redirect_to_clean_url_admin_pages() {
@@ -76,10 +78,12 @@ function give_redirect_to_clean_url_admin_pages() {
 	if ( $redirect ) {
 		// Redirect.
 		wp_redirect(
-			remove_query_arg(
-				[ '_wp_http_referer', '_wpnonce' ],
-				wp_unslash( $_SERVER['REQUEST_URI'] )
-			)
+            esc_url_raw(
+                remove_query_arg(
+                    ['_wp_http_referer'],
+                    wp_unslash($_SERVER['REQUEST_URI'])
+                )
+            )
 		);
 		exit;
 	}
@@ -121,7 +125,8 @@ add_action( 'wp_ajax_give_hide_outdated_php_notice', 'give_hide_outdated_php_not
 /**
  * Register admin notices.
  *
- * @since 1.8.9
+ * @since 2.25.2 Add nonce check for bulk action.
+ * @since      1.8.9
  */
 function _give_register_admin_notices() {
 	// Bailout.
@@ -137,9 +142,11 @@ function _give_register_admin_notices() {
 
 		// Add payment bulk notice.
 		if (
-			current_user_can( 'edit_give_payments' ) &&
-			isset( $_GET['payment'] ) &&
-			! empty( $_GET['payment'] )
+            current_user_can('edit_give_payments') &&
+            isset($_GET['_wpnonce']) &&
+            wp_verify_nonce($_GET['_wpnonce'], 'bulk-forms') &&
+            isset($_GET['payment']) &&
+            ! empty( $_GET['payment'] )
 		) {
 			$payment_count = isset( $_GET['payment'] ) ? count( $_GET['payment'] ) : 0;
 
@@ -638,6 +645,22 @@ function give_import_page_link_callback() {
 	?>
 	<a href="<?php echo esc_url( give_import_page_url() ); ?>"
 	   class="page-import-action page-title-action"><?php _e( 'Import Donations', 'give' ); ?></a>
+    <script>
+        function showReactTable () {
+            fetch( '<?php echo esc_url_raw(rest_url('give-api/v2/admin/donations/view?isLegacy=0')) ?>', {
+                method: 'GET',
+                headers: {
+                    ['X-WP-Nonce']: '<?php echo wp_create_nonce('wp_rest') ?>'
+                }
+            })
+            .then((res) => {
+                window.location.reload();
+            });
+        }
+    </script>
+    <button onclick="showReactTable()" class="page-title-action">
+        <?php _e('Switch to New View', 'give') ?>
+    </button>
 
 	<?php
 	// Check if view donation single page only.
@@ -658,9 +681,13 @@ add_action( 'give_payments_page_top', 'give_import_page_link_callback', 11 );
  * Load donation import ajax callback
  * Fire when importing from CSV start
  *
+ * @since 2.25.3 Append nonce to response url.
  * @since  1.8.13
  */
 function give_donation_import_callback() {
+
+    check_ajax_referer('give_donation_import');
+
 	// Bailout.
 	if ( ! current_user_can( 'manage_give_settings' ) ) {
 		give_die();
@@ -682,7 +709,10 @@ function give_donation_import_callback() {
 	$import_setting['dry_run']     = $output['dry_run'];
 
 	// Parent key id.
-	$main_key = maybe_unserialize( $output['main_key'] );
+	$main_key = is_serialized( $output['main_key'] )
+		/** @since 2.26.0 Avoid insecure usage of `unserialize` when the data could be submitted by the user. */
+		? @unserialize( trim( $output['main_key'] ), ['allowed_classes' => false] )
+		: $output['main_key'];
 
 	$current    = absint( $_REQUEST['current'] );
 	$total_ajax = absint( $_REQUEST['total_ajax'] );
@@ -769,6 +799,7 @@ function give_donation_import_callback() {
 			'delete_csv'    => $import_setting['delete_csv'],
 			'success'       => ( isset( $json_data['success'] ) ? $json_data['success'] : '' ),
 			'dry_run'       => $output['dry_run'],
+            '_wpnonce'      => wp_create_nonce( 'give_donation_import_success' ),
 		]
 	);
 	$json_data['url'] = $url;
@@ -1296,25 +1327,30 @@ add_action( 'profile_update', 'give_update_donor_email_on_user_update', 10, 2 );
  * Flushes Give's cache.
  */
 function give_cache_flush() {
-	if ( ! current_user_can( 'manage_give_settings' ) ) {
-		wp_die();
-	}
+    if (!is_user_logged_in() || !current_user_can('manage_give_settings')) {
+        wp_die();
+    }
 
-	$result = Give_Cache::flush_cache();
+    /**
+     * @since 2.25.2 add nonce check
+     */
+    check_ajax_referer('give_cache_flush');
 
-	if ( $result ) {
-		wp_send_json_success(
-			[
-				'message' => __( 'Cache flushed successfully.', 'give' ),
-			]
-		);
-	} else {
-		wp_send_json_error(
-			[
-				'message' => __( 'An error occurred while flushing the cache.', 'give' ),
-			]
-		);
-	}
+    $result = Give_Cache::flush_cache();
+
+    if ($result) {
+        wp_send_json_success(
+            [
+                'message' => __('Cache flushed successfully.', 'give'),
+            ]
+        );
+    } else {
+        wp_send_json_error(
+            [
+                'message' => __('An error occurred while flushing the cache.', 'give'),
+            ]
+        );
+    }
 }
 
 add_action( 'wp_ajax_give_cache_flush', 'give_cache_flush', 10, 0 );
@@ -1595,7 +1631,7 @@ add_action( 'give_post_form_template_options_settings', 'give_render_form_theme_
 /**
  * Add Custom setting view for form grid setting panel
  *
- * @unreleased
+ * @since 2.20.0
  */
 function give_render_form_grid_setting_panel() {
     require_once GIVE_PLUGIN_DIR . 'src/Views/Admin/Form/FormGrid-Settings.php';

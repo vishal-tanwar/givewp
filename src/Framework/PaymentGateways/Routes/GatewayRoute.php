@@ -27,9 +27,6 @@ class GatewayRoute
      * @return void
      *
      * @throws PaymentGatewayException
-     * @since 2.18.0
-     * @since 2.19.0 - validate secureRouteMethods
-     *
      */
     public function __invoke()
     {
@@ -58,14 +55,7 @@ class GatewayRoute
              */
             $gateway = give($paymentGateways[$data->gatewayId]);
 
-            // get all public and secure gateway methods
-            $allGatewayMethods = array_merge($gateway->routeMethods, $gateway->secureRouteMethods);
-
-            // Make sure the method being called is defined in the gateway.
-            if (
-                !method_exists($gateway, $data->gatewayMethod) ||
-                !in_array($data->gatewayMethod, $allGatewayMethods, true)
-            ) {
+            if (!$gateway->supportsMethodRoute($data->gatewayMethod)) {
                 throw new PaymentGatewayException('The gateway method does not exist.');
             }
 
@@ -122,8 +112,8 @@ class GatewayRoute
      * @since 2.19.4 replace RouteSignature args with unique donationId
      * @since 2.19.0
      *
-     * @param  string  $routeSignature
-     * @param  GatewayRouteData  $data
+     * @param string $routeSignature
+     * @param GatewayRouteData $data
      *
      * @return void
      */
@@ -164,21 +154,18 @@ class GatewayRoute
      * @param PaymentGateway $gateway
      * @param string $method
      * @param array $queryParams
-     *
-     * @return void
-     *
      */
     private function handleGatewayRouteMethod(PaymentGateway $gateway, $method, $queryParams)
     {
         try {
-            $this->handleResponse($gateway->$method($queryParams));
+            $this->handleResponse($gateway->callRouteMethod($method, $queryParams));
         } catch (PaymentGatewayException $paymentGatewayException) {
             $this->handleResponse(response()->json($paymentGatewayException->getMessage()));
         } catch (\Exception $exception) {
             PaymentGatewayLog::error(
                 $exception->getMessage(),
                 [
-                    'Payment Gateway' => $gateway->getId(),
+                    'Payment Gateway' => $gateway::id(),
                     'Payment Gateway Method' => $method,
                     'Query Params' => $queryParams
                 ]

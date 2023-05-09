@@ -45,7 +45,8 @@ function give_import_donation_report_reset() {
 /**
  * Give get form data from csv if not then create and form and return the form value.
  *
- * @since 1.8.13.
+ * @since      1.8.13.
+ * @since 2.26.0 Replace deprecated get_page_by_title() with give_get_page_by_title().
  *
  * @param $data .
  *
@@ -73,7 +74,7 @@ function give_import_get_form_data_from_csv( $data, $import_setting = [] ) {
 	}
 
 	if ( false === $form && ! empty( $data['form_title'] ) ) {
-		$form = get_page_by_title( $data['form_title'], OBJECT, 'give_forms' );
+		$form = give_get_page_by_title($data['form_title'], OBJECT, 'give_forms');
 
 		if ( ! empty( $form->ID ) ) {
 
@@ -96,7 +97,7 @@ function give_import_get_form_data_from_csv( $data, $import_setting = [] ) {
 
 		}
 
-		$form = get_page_by_title( $data['form_title'], OBJECT, 'give_forms' );
+        $form = give_get_page_by_title($data['form_title'], OBJECT, 'give_forms');
 		if ( ! empty( $form->ID ) ) {
 			$form = new Give_Donate_Form( $form->ID );
 		}
@@ -702,7 +703,7 @@ function give_save_import_donation_to_db( $raw_key, $row_data, $main_key = [], $
 
 				// check for duplicate donor by donor id
 				if ( ! empty( $csv_data['donor_id'] ) && ! empty( $data['donor_id'] ) && $csv_data['donor_id'] === $data['donor_id'] ) {
-					$donor = array_search( (int) $data['donor_id'], array_column( 'id', $donors_list ) );
+					$donor = array_search( (int) $data['donor_id'], array_column( $donors_list, 'id' ) );
 					if ( ! empty( $donor ) ) {
 						$dry_run_duplicate_donor = true;
 					}
@@ -710,7 +711,7 @@ function give_save_import_donation_to_db( $raw_key, $row_data, $main_key = [], $
 
 				// check for duplicate donor by user id
 				if ( empty( $dry_run_duplicate_donor ) && ! empty( $csv_data['user_id'] ) && ! empty( $data['user_id'] ) && $csv_data['user_id'] === $data['user_id'] ) {
-					$donor = array_search( (int) $data['user_id'], array_column( 'user_id', $donors_list ) );
+					$donor = array_search( (int) $data['user_id'], array_column( $donors_list, 'user_id' ) );
 					if ( ! empty( $donor ) ) {
 						$dry_run_duplicate_donor = true;
 					} else {
@@ -806,7 +807,7 @@ function give_save_import_donation_to_db( $raw_key, $row_data, $main_key = [], $
 		],
 		'gateway'         => ( ! empty( $data['gateway'] ) ? strtolower( $data['gateway'] ) : 'manual' ),
 		'give_form_title' => ( ! empty( $data['form_title'] ) ? $data['form_title'] : ( method_exists( $form, 'get_name' ) ? $form->get_name() : '' ) ),
-		'give_form_id'    => method_exists( $form, 'get_ID' ) ? $form->get_ID() : '',
+		'give_form_id'    => ( ! empty( $form ) && method_exists( $form, 'get_ID' ) ) ? $form->get_ID() : '',
 		'give_price_id'   => $price_id,
 		'purchase_key'    => strtolower( md5( uniqid() ) ),
 		'user_email'      => $data['email'],
@@ -1120,5 +1121,5 @@ function give_import_page_url( $parameter = [] ) {
 	];
 	$import_query_arg  = wp_parse_args( $parameter, $defalut_query_arg );
 
-	return add_query_arg( $import_query_arg, admin_url( 'edit.php' ) );
+	return esc_url_raw( add_query_arg( $import_query_arg, admin_url( 'edit.php' ) ) );
 }
